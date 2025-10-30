@@ -110,44 +110,113 @@ ${selectedPersona.calendar}
 
 ${samaSchedule}
 
-INSTRUCTIONS:
-- Speak like a caring concierge helping a friend: warm, concise, confident
-- Open with 1 short line that references their day (meetings/commitments) to set context
-- ALWAYS give a PRIMARY option and, when possible, ONE BACKUP option (earlier or later) that does not conflict with their calendar
-- Keep total length to roughly 80–120 words; specific but not verbose
-- ONLY suggest classes that truly fit open time; never include conflicting options
-- Naturally reference their calendar (e.g., "Since you’re free after 12:30 PM…") and their preferences/constraints
-- Use this exact formatting for any class you mention (each on its own line):
-  
-  **[CLASS_NAME]** | Day: [DAY] | Time: [TIME] | Instructor: [INSTRUCTOR]
+TOOL USAGE RULES - CRITICAL - READ THIS FIRST:
+==============================================
+MANDATORY RULE: If the user wants to book, schedule, add, or attend ANY class, you MUST call the bookClass tool. DO NOT just list classes in text format.
 
-- After the options, add one brief rationale sentence tailored to them
-- End with a friendly closing question (e.g., "Shall I reserve the first one?")
+When to call bookClass tool with mode='selection':
+- User says: "I want to add class", "book a class", "schedule me", "find me a class", "I want to attend", "sign me up", "reserve a spot", "add to my schedule", "reschedule", "change my booking"
+- User asks about availability: "Can I do yoga tomorrow?", "What classes are free on Wednesday?"
+- User mentions wanting to join or attend a class
+- ANY request that implies they want to book or schedule a class
+
+How to use the tool:
+1. First, write a brief 1-2 sentence introduction referencing their calendar
+2. IMMEDIATELY call the bookClass tool with mode='selection' and provide an array of 2-3 suitable classes:
+   - Each class object must have: className, date, time, instructor (optional)
+   - Include a PRIMARY option and BACKUP options
+   - Only include classes that don't conflict with their calendar
+3. After the tool call, you can add one brief sentence explaining why these options work for them
+
+Example response structure:
+"Since you're free after your Investor relations meeting Wednesday morning, here are some great options:"
+[CALL bookClass tool with classes array]
+"Both classes work well with your schedule and preferences."
+
+When user confirms (e.g., "Yes, book these classes: X, Y"):
+- Call bookClass with mode='confirm', ALL originally shown classes, and selectedIndices
+
+IMPORTANT: Never just list classes as bullet points in text. ALWAYS use the tool to show interactive checkboxes.
+
+CONVERSATIONAL GUIDELINES:
+- Speak like a caring concierge: warm, concise, confident
+- Reference their day/calendar context in your intro
+- Keep total length to roughly 80-120 words
 - Mention instructor only when meaningfully relevant
 - Skip marketing language; be practical and personal
-- If they ask a simple question, answer in 1–2 sentences
+- For simple informational questions NOT about booking (e.g., "What's yoga?"), answer in 1-2 sentences without tools
 
-Tone guideline: talk naturally, like you genuinely know them:`;
+Tone: Talk naturally, like you genuinely know them`;
 
   const result = streamText({
-    model: openai("gpt-4o-mini"),
+    model: openai("gpt-4o"),
     system: systemPrompt,
     tools: {
       bookClass: {
-        description: "Book a class",
+        description:
+          "REQUIRED tool for showing classes to book/schedule. Use this whenever user wants to add, book, schedule, or attend classes. Shows interactive checkbox UI for class selection. DO NOT list classes as text - ALWAYS use this tool.",
         inputSchema: z.object({
-          className: z.string(),
-          date: z.string(),
-          time: z.string(),
-          instructor: z.string().optional(),
+          classes: z.array(
+            z.object({
+              className: z.string(),
+              date: z.string(),
+              time: z.string(),
+              instructor: z.string().optional(),
+            })
+          ),
+          mode: z
+            .enum(["selection", "confirm"])
+            .optional()
+            .describe(
+              "Use 'selection' to show classes for selection, 'confirm' to book selected classes"
+            ),
+          selectedIndices: z
+            .array(z.number())
+            .optional()
+            .describe("Indices of selected classes to book (for confirm mode)"),
         }),
-        execute: async ({ className, date, time, instructor }) => {
-          await new Promise((resolve) => setTimeout(resolve, 6000));
+        execute: async ({ classes, mode = "selection", selectedIndices }) => {
+          if (mode === "confirm") {
+            // Simulate booking delay
+            await new Promise((resolve) => setTimeout(resolve, 3000));
+            const bookedClasses = selectedIndices
+              ? selectedIndices.map((idx) => classes[idx])
+              : classes;
+            return {
+              success: true,
+              mode: "confirm",
+              bookedClasses,
+              message: `Successfully booked ${bookedClasses.length} ${
+                bookedClasses.length === 1 ? "class" : "classes"
+              }`,
+            } as {
+              success: boolean;
+              mode: "confirm";
+              bookedClasses: Array<{
+                className: string;
+                date: string;
+                time: string;
+                instructor?: string;
+              }>;
+              message: string;
+            };
+          }
+          // Selection mode - just return the classes for display
           return {
             success: true,
-            message: instructor
-              ? `Class ${className} booked for ${date} at ${time} with instructor ${instructor}`
-              : `Class ${className} booked for ${date} at ${time}`,
+            mode: "selection",
+            classes,
+            message: "Please select the classes you want to book",
+          } as {
+            success: boolean;
+            mode: "selection";
+            classes: Array<{
+              className: string;
+              date: string;
+              time: string;
+              instructor?: string;
+            }>;
+            message: string;
           };
         },
       },

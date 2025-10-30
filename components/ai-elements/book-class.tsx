@@ -79,9 +79,6 @@ export function BookClassDisplay({ part }: BookClassDisplayProps) {
         </div>
       </div>
 
-      {/* Divider */}
-      <div className="border-t border-current opacity-20" />
-
       {/* Progress Steps - Show one step at a time with spinner */}
       {!isCompleted && (
         <div className="py-2">
@@ -121,7 +118,6 @@ export function BookClassDisplay({ part }: BookClassDisplayProps) {
       {/* Result Message */}
       {isCompleted && part.result?.message && (
         <>
-          <div className="border-t border-current opacity-20" />
           <p className="text-xs text-foreground font-medium">
             {part.result.message}
           </p>

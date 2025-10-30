@@ -34,6 +34,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import { cn } from "@/lib/utils";
 import { BookClassDisplay } from "@/components/ai-elements/book-class";
+import { BookClassSelectionDisplay } from "@/components/ai-elements/book-class-selection";
 import { FetchCalendarDisplay } from "@/components/ai-elements/fetch-calendar";
 //
 import { useRouter } from "next/navigation";
@@ -295,7 +296,7 @@ export default function Chatbot({ preSelectedPersona }: ChatbotProps) {
                 )}
 
                 {/* Messages */}
-                {messages.map((message) => (
+                {messages.map((message, messageIndex) => (
                   <div key={message.id} className="mb-6">
                     <Message from={message.role}>
                       <MessageContent
@@ -312,15 +313,110 @@ export default function Chatbot({ preSelectedPersona }: ChatbotProps) {
                           }
                           if (type === "tool-bookClass") {
                             const { state } = part;
-                            // Show UI for input-available (in-progress) and output-available (completed) states
-                            // if (state === "input-streaming") {
-                            //   return <Badge key={index}>Processing...</Badge>;
-                            // }
                             if (
                               state === "output-available" ||
                               state === "input-available"
                             ) {
                               const { output, input } = part;
+                              const typedInput = input as {
+                                classes?: Array<{
+                                  className: string;
+                                  date: string;
+                                  time: string;
+                                  instructor?: string;
+                                }>;
+                                className?: string;
+                                date?: string;
+                                time?: string;
+                                instructor?: string;
+                                mode?: "selection" | "confirm";
+                                selectedIndices?: number[];
+                              };
+                              const typedOutput = output as {
+                                success: boolean;
+                                message: string;
+                                mode?: "selection" | "confirm";
+                                classes?: Array<{
+                                  className: string;
+                                  date: string;
+                                  time: string;
+                                  instructor?: string;
+                                }>;
+                                bookedClasses?: Array<{
+                                  className: string;
+                                  date: string;
+                                  time: string;
+                                  instructor?: string;
+                                }>;
+                              };
+
+                              // Check if this is the new multi-class format
+                              const isMultiClass =
+                                typedInput?.classes || typedOutput?.classes;
+
+                              if (isMultiClass) {
+                                // Check if there's a confirmation message after this one
+                                const hasConfirmationAfter = messages
+                                  .slice(messageIndex + 1)
+                                  .some((m) =>
+                                    m.parts.some(
+                                      (p) =>
+                                        p.type === "tool-bookClass" &&
+                                        p.state === "output-available" &&
+                                        (p.output as any)?.mode === "confirm"
+                                    )
+                                  );
+
+                                // Hide selection UI if confirmation exists
+                                if (
+                                  hasConfirmationAfter &&
+                                  typedOutput?.mode === "selection"
+                                ) {
+                                  return null;
+                                }
+
+                                return (
+                                  <div key={index} className="mt-3 first:mt-0">
+                                    <BookClassSelectionDisplay
+                                      part={{
+                                        type: part.type,
+                                        result:
+                                          state === "output-available"
+                                            ? typedOutput
+                                            : undefined,
+                                        input: typedInput,
+                                      }}
+                                      onConfirm={(selectedIndices) => {
+                                        if (
+                                          selectedPersona &&
+                                          typedInput?.classes
+                                        ) {
+                                          const selectedClasses =
+                                            selectedIndices.map(
+                                              (idx) => typedInput.classes![idx]
+                                            );
+                                          const classNames = selectedClasses
+                                            .map((c) => c.className)
+                                            .join(", ");
+                                          // Send a confirmation message
+                                          sendMessage(
+                                            {
+                                              text: `Yes, please book these classes: ${classNames}`,
+                                            },
+                                            {
+                                              body: {
+                                                persona: selectedPersona,
+                                              },
+                                            }
+                                          );
+                                        }
+                                      }}
+                                    />
+                                  </div>
+                                );
+                              }
+
+                              // Fallback to old single-class format
                               return (
                                 <div key={index} className="mt-3 first:mt-0">
                                   <BookClassDisplay
