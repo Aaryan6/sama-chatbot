@@ -10,15 +10,7 @@ import {
   PromptInputActions,
   PromptInputAction,
 } from "@/components/ui/prompt-input";
-import {
-  Send,
-  ThumbsUp,
-  ThumbsDown,
-  Copy,
-  ChevronDown,
-  Check,
-  ArrowLeft,
-} from "lucide-react";
+import { Send, ChevronDown, Check, ArrowLeft } from "lucide-react";
 import {
   Conversation,
   ConversationContent,
@@ -39,10 +31,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import Image from "next/image";
+
 import { cn } from "@/lib/utils";
 import { BookClassDisplay } from "@/components/ai-elements/book-class";
-import { Badge } from "./ui/badge";
+import { FetchCalendarDisplay } from "@/components/ai-elements/fetch-calendar";
+//
 import { useRouter } from "next/navigation";
 
 type Persona = "sheila" | "ritvik" | "gaurav";
@@ -81,7 +74,9 @@ interface ChatbotProps {
 
 export default function Chatbot({ preSelectedPersona }: ChatbotProps) {
   const router = useRouter();
-  const [selectedPersona, setSelectedPersona] = useState<Persona | null>(preSelectedPersona || null);
+  const [selectedPersona, setSelectedPersona] = useState<Persona | null>(
+    preSelectedPersona || null
+  );
   const [input, setInput] = useState("");
 
   const personaNames = {
@@ -343,6 +338,41 @@ export default function Chatbot({ preSelectedPersona }: ChatbotProps) {
                                         date: string;
                                         time: string;
                                         instructor?: string;
+                                      },
+                                    }}
+                                  />
+                                </div>
+                              );
+                            }
+                          }
+                          if (type === "tool-fetchCalendar") {
+                            const { state } = part;
+                            if (
+                              state === "output-available" ||
+                              state === "input-available"
+                            ) {
+                              const { output, input } = part;
+                              return (
+                                <div key={index} className="mt-3 first:mt-0">
+                                  <FetchCalendarDisplay
+                                    part={{
+                                      type: part.type,
+                                      result:
+                                        state === "output-available"
+                                          ? (output as {
+                                              success: boolean;
+                                              message?: string;
+                                              events?: Array<{
+                                                title: string;
+                                                date: string;
+                                                time: string;
+                                                location?: string;
+                                                with?: string;
+                                              }>;
+                                            })
+                                          : undefined,
+                                      input: input as {
+                                        date: string;
                                       },
                                     }}
                                   />

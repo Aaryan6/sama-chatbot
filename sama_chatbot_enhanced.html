@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SIA - Sama Intelligent Assistant</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 900px;
+        background: white;
+        border-radius: 24px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        height: 90vh;
+        max-height: 800px;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 30px;
+        color: white;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        letter-spacing: -0.5px;
+      }
+
+      .header p {
+        font-size: 14px;
+        opacity: 0.9;
+        font-weight: 300;
+      }
+
+      .persona-selector {
+        background: white;
+        padding: 20px 30px;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .persona-btn {
+        padding: 12px 24px;
+        border: 2px solid #e9ecef;
+        background: white;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        color: #495057;
+      }
+
+      .persona-btn:hover {
+        border-color: #667eea;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+      }
+
+      .persona-btn.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: #667eea;
+        color: white;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      }
+
+      .chat-container {
+        flex: 1;
+        overflow-y: auto;
+        padding: 30px;
+        background: #f8f9fa;
+      }
+
+      .message {
+        margin-bottom: 20px;
+        display: flex;
+        gap: 12px;
+        animation: fadeIn 0.3s ease;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .message.user {
+        flex-direction: row-reverse;
+      }
+
+      .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 16px;
+        flex-shrink: 0;
+      }
+
+      .message.assistant .avatar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .message.user .avatar {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+      }
+
+      .message-content {
+        max-width: 70%;
+        padding: 16px 20px;
+        border-radius: 16px;
+        line-height: 1.6;
+        font-size: 15px;
+      }
+
+      .message.assistant .message-content {
+        background: white;
+        color: #212529;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      }
+
+      .message.user .message-content {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      /* Markdown Styling */
+      .message-content h1,
+      .message-content h2,
+      .message-content h3 {
+        margin-top: 12px;
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+
+      .message-content h1 {
+        font-size: 20px;
+      }
+
+      .message-content h2 {
+        font-size: 18px;
+      }
+
+      .message-content h3 {
+        font-size: 16px;
+      }
+
+      .message-content p {
+        margin-bottom: 12px;
+      }
+
+      .message-content ul,
+      .message-content ol {
+        margin-left: 20px;
+        margin-bottom: 12px;
+      }
+
+      .message-content li {
+        margin-bottom: 6px;
+      }
+
+      .message-content strong {
+        font-weight: 600;
+        color: #667eea;
+      }
+
+      .message-content em {
+        font-style: italic;
+        color: #6c757d;
+      }
+
+      .message-content code {
+        background: #f1f3f5;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: "Courier New", monospace;
+        font-size: 14px;
+      }
+
+      .message-content pre {
+        background: #f1f3f5;
+        padding: 12px;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin-bottom: 12px;
+      }
+
+      .message-content blockquote {
+        border-left: 4px solid #667eea;
+        padding-left: 12px;
+        margin: 12px 0;
+        color: #6c757d;
+        font-style: italic;
+      }
+
+      /* Class Selection Cards */
+      .class-options {
+        margin-top: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .class-card {
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 14px 16px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .class-card:hover {
+        border-color: #667eea;
+        background: #f0f2ff;
+        transform: translateX(4px);
+      }
+
+      .class-card.selected {
+        border-color: #667eea;
+        background: linear-gradient(135deg, #f0f2ff 0%, #e8ebff 100%);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+      }
+
+      .class-checkbox {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #ced4da;
+        border-radius: 6px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        margin-top: 2px;
+      }
+
+      .class-card.selected .class-checkbox {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: #667eea;
+      }
+
+      .class-checkbox::after {
+        content: "✓";
+        color: white;
+        font-size: 14px;
+        font-weight: bold;
+        display: none;
+      }
+
+      .class-card.selected .class-checkbox::after {
+        display: block;
+      }
+
+      .class-info {
+        flex: 1;
+      }
+
+      .class-name {
+        font-weight: 600;
+        font-size: 15px;
+        color: #212529;
+        margin-bottom: 4px;
+      }
+
+      .class-details {
+        font-size: 13px;
+        color: #6c757d;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .class-detail-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .confirm-selection-btn {
+        margin-top: 12px;
+        padding: 10px 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        width: 100%;
+      }
+
+      .confirm-selection-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.3);
+      }
+
+      .confirm-selection-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .input-area {
+        padding: 20px 30px;
+        background: white;
+        border-top: 1px solid #e9ecef;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .input-area input {
+        flex: 1;
+        padding: 14px 20px;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        font-size: 15px;
+        outline: none;
+        transition: all 0.3s ease;
+        font-family: inherit;
+      }
+
+      .input-area input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+
+      .input-area button {
+        padding: 14px 28px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 15px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+      }
+
+      .input-area button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+      }
+
+      .input-area button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .typing-indicator {
+        display: flex;
+        gap: 4px;
+        padding: 16px 20px;
+      }
+
+      .typing-indicator span {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #667eea;
+        animation: typing 1.4s infinite;
+      }
+
+      .typing-indicator span:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+
+      .typing-indicator span:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+
+      @keyframes typing {
+        0%,
+        60%,
+        100% {
+          transform: translateY(0);
+          opacity: 0.5;
+        }
+        30% {
+          transform: translateY(-10px);
+          opacity: 1;
+        }
+      }
+
+      .welcome-message {
+        text-align: center;
+        padding: 40px 20px;
+        color: #6c757d;
+      }
+
+      .welcome-message h2 {
+        font-size: 24px;
+        margin-bottom: 12px;
+        color: #495057;
+      }
+
+      .welcome-message p {
+        font-size: 15px;
+        line-height: 1.6;
+      }
+
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: #667eea;
+        border-radius: 4px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: #764ba2;
+      }
+
+      .error-message {
+        background: #fee;
+        color: #c33;
+        padding: 12px 20px;
+        border-radius: 8px;
+        margin: 10px 30px;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>SIA - Sama Intelligent Assistant</h1>
+        <p>Your personal wellness scheduling companion</p>
+      </div>
+
+      <div class="persona-selector">
+        <button class="persona-btn" data-persona="sheila">Sheila</button>
+        <button class="persona-btn" data-persona="ritvik">Ritvik</button>
+        <button class="persona-btn" data-persona="gaurav">Gaurav</button>
+      </div>
+
+      <div class="chat-container" id="chatContainer">
+        <div class="welcome-message">
+          <h2>Welcome to SAMA Studio 🧘</h2>
+          <p>
+            Select a persona above to start scheduling your wellness classes.<br />
+            I'll help you find the perfect class times based on your schedule
+            and preferences.
+          </p>
+        </div>
+      </div>
+
+      <div class="input-area">
+        <input
+          type="text"
+          id="messageInput"
+          placeholder="Select a persona first..."
+          disabled
+        />
+        <button id="sendButton" disabled>Send</button>
+      </div>
+    </div>
+
+    <script>
+      let currentPersona = null;
+      let conversationHistory = [];
+      let personaData = {};
+      let selectedClasses = new Set();
+
+      // Persona buttons
+      document.querySelectorAll(".persona-btn").forEach((btn) => {
+        btn.addEventListener("click", function () {
+          const persona = this.dataset.persona;
+          selectPersona(persona, this);
+        });
+      });
+
+      function selectPersona(persona, buttonElement = null) {
+        currentPersona = persona;
+
+        // Update UI
+        document.querySelectorAll(".persona-btn").forEach((btn) => {
+          btn.classList.remove("active");
+        });
+
+        // If buttonElement is provided, use it; otherwise find the button by persona
+        if (buttonElement) {
+          buttonElement.classList.add("active");
+        } else {
+          const targetBtn = document.querySelector(
+            `.persona-btn[data-persona="${persona}"]`
+          );
+          if (targetBtn) targetBtn.classList.add("active");
+        }
+
+        // Enable input
+        const input = document.getElementById("messageInput");
+        const button = document.getElementById("sendButton");
+        input.disabled = false;
+        button.disabled = false;
+        input.placeholder = `Ask ${
+          persona.charAt(0).toUpperCase() + persona.slice(1)
+        } about class scheduling...`;
+        input.focus();
+
+        // Clear chat and show welcome
+        const chatContainer = document.getElementById("chatContainer");
+        chatContainer.innerHTML = "";
+
+        const personaNames = {
+          sheila: "Sheila",
+          ritvik: "Ritvik",
+          gaurav: "Gaurav",
+        };
+
+        addMessage(
+          "assistant",
+          `Hello! I'm SIA, your wellness assistant for **${personaNames[persona]}**. I have access to your schedule, preferences, and our class timetable. How can I help you find the perfect class?`
+        );
+
+        conversationHistory = [];
+        selectedClasses.clear();
+      }
+
+      // Check for persona from landing page
+      window.addEventListener("DOMContentLoaded", () => {
+        const savedPersona = localStorage.getItem("selectedPersona");
+        if (savedPersona) {
+          // Clear the localStorage after reading
+          localStorage.removeItem("selectedPersona");
+          // Auto-select the persona
+          selectPersona(savedPersona);
+        }
+      });
+
+      // Send message
+      document
+        .getElementById("sendButton")
+        .addEventListener("click", sendMessage);
+      document
+        .getElementById("messageInput")
+        .addEventListener("keypress", function (e) {
+          if (e.key === "Enter" && !this.disabled) {
+            sendMessage();
+          }
+        });
+
+      async function sendMessage() {
+        const input = document.getElementById("messageInput");
+        const message = input.value.trim();
+
+        if (!message || !currentPersona) return;
+
+        // Add user message
+        addMessage("user", message);
+        input.value = "";
+
+        // Disable input while processing
+        input.disabled = true;
+        document.getElementById("sendButton").disabled = true;
+
+        // Show tool call indicator
+        const toolCallDiv = showToolCallIndicator();
+
+        // Wait for tool calls to show (longer duration so user can see all three steps)
+        await new Promise((resolve) => setTimeout(resolve, 2500));
+
+        try {
+          // Call Claude API (tool call indicator stays visible during API call)
+          const response = await fetch(
+            "https://api.anthropic.com/v1/messages",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                model: "claude-sonnet-4-20250514",
+                max_tokens: 500,
+                messages: [
+                  ...conversationHistory,
+                  {
+                    role: "user",
+                    content: buildPrompt(message),
+                  },
+                ],
+              }),
+            }
+          );
+
+          const data = await response.json();
+
+          // Remove tool call indicator
+          toolCallDiv.remove();
+
+          if (data.content && data.content[0]) {
+            const assistantMessage = data.content[0].text;
+
+            // Parse for class recommendations
+            const classes = parseClassRecommendations(assistantMessage);
+
+            addMessage("assistant", assistantMessage, classes);
+
+            // Update conversation history
+            conversationHistory.push({
+              role: "user",
+              content: message,
+            });
+            conversationHistory.push({
+              role: "assistant",
+              content: assistantMessage,
+            });
+          } else {
+            showError("Sorry, I encountered an error. Please try again.");
+          }
+        } catch (error) {
+          toolCallDiv.remove();
+          showError(
+            "Failed to connect to the assistant. Please check your connection and try again."
+          );
+          console.error("Error:", error);
+        }
+
+        // Re-enable input
+        input.disabled = false;
+        document.getElementById("sendButton").disabled = false;
+        input.focus();
+      }
+
+      function buildPrompt(userMessage) {
+        const personaInfo = {
+          sheila: {
+            name: "Sheila",
+            memories: `
+- 31 years old, Marketing Manager, 24 weeks pregnant with baby girl
+- Has gestational diabetes, experiencing lower back pain, pregnancy insomnia
+- Works from home 3 days/week, flexible schedule, product launch in November
+- Prefers prenatal classes and breathwork, avoids early mornings before 8 AM, likes instructor Meera
+- No inversions, deep twists, or lying flat, needs props for support, balance issues
+- Needs breakfast before morning activity, takes afternoon naps, high-protein diet
+- Friends with Anjali and Divya from prenatal class, husband Arjun sometimes joins Sunday classes
+- Goals: preparing for childbirth, managing work stress, planning postnatal recovery`,
+            calendar: `
+Mon Nov 3: 9-10 AM Team standup, 2-3 PM Product launch planning, 3:30-4:30 PM Doctor appointment
+Tue Nov 4: 10-11 AM Content calendar planning, 3-4 PM Budget review meeting
+Wed Nov 5: 11 AM-12:30 PM Campaign strategy, 2-3 PM 1-on-1 with manager
+Thu Nov 6: 9-10 AM Partner brands call, 11 AM-12 PM Analytics review, 2:30-3:30 PM Prenatal class at hospital
+Fri Nov 7: 9-10 AM Team standup, 2-3 PM Product launch planning
+Sat-Sun: Off days`,
+          },
+          ritvik: {
+            name: "Ritvik",
+            memories: `
+- 42 years old, Senior Software Engineer, lives in Marathahalli (15 min to Whitefield)
+- Elevated cholesterol, history of knee problems, resting heart rate 65 bpm, recent anxiety chest pains
+- Demanding tech job, on-call rotations, early riser - productive before 10 AM, at desk by 7:30 AM
+- Loves high-intensity cardio yoga, prefers early 6 AM classes, favorite instructor is Rohan
+- Avoid high-impact due to knee issues, no marathons, needs joint-friendly cardio
+- Wears Garmin watch, tracks all fitness data, intermittent fasting until noon, high-protein diet
+- Married to Neha (physician), two kids age 10 and 7, weekday evenings for family, weekend mornings flexible
+- Goals: cardiovascular health, target heart rate 140-160 bpm, wants to trek with kids, family history of heart disease`,
+            calendar: `
+Mon Nov 3: 7:30-8 AM Standup, 10 AM-12 PM Coding, 2-3 PM Cloud review, 3:30-4:30 PM Tech debt discussion
+Tue Nov 4: 7:30-8 AM Standup, 9-11 AM Production deployment, 1-2 PM Lunch with PM, 3-5 PM Debug issue
+Wed Nov 5: 7:30-8 AM Standup, 10-11 AM Tech talk prep, 11:30 AM-12:30 PM Security review, 2-3:30 PM Retrospective
+Thu Nov 6: 7:30-8 AM Standup, 9-10 AM Refactoring, 11 AM-12 PM All-hands, 2-3 PM Performance optimization, 3:30-4:30 PM 1-on-1 with manager
+Fri Nov 7: 7:30-8:30 AM Code review, 9:30-10:30 AM Sprint planning, 11 AM-12 PM Architecture discussion, 2-3 PM 1-on-1 with junior dev
+Weekday evenings: Family time (blocked)
+Sat-Sun: Flexible mornings`,
+          },
+          gaurav: {
+            name: "Gaurav",
+            memories: `
+- 56 years old, Founder & CEO of e-commerce startup, lives in Indiranagar (25 min to Whitefield)
+- Mild hypertension on medication, shoulder and neck stiffness, lower back issues, chronic insomnia improving
+- Controls own calendar, protects morning 6-7 AM and evening 6:30-7:30 PM slots, no meetings those times
+- Loves mindfulness and breathwork, prefers gentle yoga, favorite instructors Priya and Meera
+- Avoid high-intensity cardio, no inversions or advanced strength training, needs props for support
+- Reads Bhagavad Gita and Zen Buddhism, practices breathing before meetings, lost 8 kg in 8 months
+- Married to Anjali 28 years, two adult children, empty nest, seeking work-life balance
+- Goals: mental clarity for decisions, better sleep quality, succession planning, transition to Executive Chairman role`,
+            calendar: `
+Mon Nov 3: 8-9 AM Executive standup, 9:30-10:30 AM HR hiring, 11 AM-12 PM Sales pipeline, 2:30-3:30 PM Engineering sync, 4-5 PM Customer advisory
+Tue Nov 4: 9:30-10:30 AM Board 1-on-1, 11 AM-12 PM Marketing strategy, 3-4 PM Legal review, 4:30-5:30 PM All-hands prep
+Wed Nov 5: 8-9 AM Executive meeting, 10-11 AM Investor relations, 2-3 PM Finance deep dive, 3:30-5 PM Strategic initiatives
+Thu Nov 6: 9:30-10:30 AM Product demo, 11 AM-12 PM VP Engineering interview, 2:30-3:30 PM Executive coach, 4-5 PM Team culture
+Fri Nov 7: 8-9 AM Executive meeting, 10-11 AM Investor call, 2-3 PM Product roadmap, 3:30-5 PM Strategic planning
+Sat Nov 8: 2-4 PM Board prep work
+Protected slots: 6-7 AM and 6:30-7:30 PM daily (no meetings)`,
+          },
+        };
+
+        const samaSchedule = `
+SAMA STUDIO SCHEDULE (Nov 3-9, 2025):
+
+Mon Nov 3: 6-7 AM Classical Hatha (Priya) | 7:15-8:15 AM Reformer Pilates (Ananya) | 8:30-9:30 AM Ashtanga Vinyasa (Rohan) | 9:45-10:45 AM Prenatal Gentle (Meera) | 4-5 PM Mindful Strength (Karthik) | 5:15-6:15 PM FireUp Mat Pilates (Ananya) | 6:30-7:30 PM Micro Meditation (Priya)
+
+Tue Nov 4: 6-7 AM Dynamic Vinyasa (Rohan) | 7:15-8:15 AM Wall Pilates (Ananya) | 8:30-9:30 AM Classical Hatha Props (Priya) | 9:45-10:45 AM Prenatal Hatha (Meera) | 4-5 PM Aerial Fitness (Karthik) | 5:15-6:15 PM Reformer Pilates (Ananya) | 6:30-7:30 PM Nervous System Reset (Meera)
+
+Wed Nov 5: 6-7 AM Classical Hatha (Priya) | 7:15-8:15 AM Reformer Pilates (Ananya) | 8:30-9:30 AM FireUp Mat Pilates (Ananya) | 9:45-10:45 AM Prenatal Gentle (Meera) | 4-5 PM Rhythmic Flow (Priya) | 5:15-6:15 PM Mindful Strength (Karthik) | 6:30-7:30 PM Stillness Flow (Meera)
+
+Thu Nov 6: 6-7 AM Ashtanga Vinyasa (Rohan) | 7:15-8:15 AM Wall Pilates (Ananya) | 8:30-9:30 AM Classical Hatha Props (Priya) | 9:45-10:45 AM Prenatal Hatha (Meera) | 4-5 PM Aerial Fitness (Karthik) | 5:15-6:15 PM Reformer Pilates (Ananya) | 6:30-7:30 PM Breathwork (Priya)
+
+Fri Nov 7: 6-7 AM Classical Hatha (Priya) | 7:15-8:15 AM Reformer Pilates (Ananya) | 8:30-9:30 AM Dynamic Vinyasa (Rohan) | 9:45-10:45 AM Prenatal Gentle (Meera) | 4-5 PM Aerial Fitness (Karthik) | 5:15-6:15 PM Wall Pilates (Ananya) | 6:30-7:30 PM Breathwork (Priya)
+
+Sat Nov 8: 6:30-7:30 AM Ashtanga Vinyasa (Rohan) | 7:45-8:45 AM FireUp Mat Pilates (Ananya) | 9-10 AM Mindful Strength (Karthik) | 10:15-11:15 AM Prenatal Hatha (Meera) | 4-5 PM Rhythmic Flow (Priya) | 5:15-6:15 PM Reformer Pilates (Ananya) | 6:30-7:30 PM Nervous System Reset (Meera)
+
+Sun Nov 9: 7-8 AM Classical Hatha Props (Priya) | 8:15-9:15 AM Stillness Flow (Meera) | 9:30-10:30 AM Dynamic Vinyasa (Rohan) | 4:30-5:30 PM Breathwork Session (Priya) | 5:45-6:45 PM Wall Pilates (Ananya)
+`;
+
+        const persona = personaInfo[currentPersona];
+
+        return `You are a premium wellness scheduling assistant for SAMA Studio in Bangalore. You're helping ${
+          persona.name
+        }.
+
+PERSONA INFORMATION:
+${persona.memories}
+
+${persona.name.toUpperCase()}'S CALENDAR:
+${persona.calendar}
+
+${samaSchedule}
+
+USER QUESTION: ${userMessage}
+
+INSTRUCTIONS:
+- Talk like a real person helping a friend - direct, warm, and to the point
+- NO fluff, NO generic compliments about the studio, NO unnecessary explanations
+- Get straight to what matters: availability, specific timing conflicts, and why this instructor/class works for THEM
+- ONLY suggest classes that fit their available time slots - DO NOT show options that conflict with their calendar
+- Show maximum 2-3 options, or even just 1 if that's the best fit
+- Reference their actual calendar conflicts naturally (e.g., "Since you have a meeting at 9 AM, you could do...")
+- When recommending classes, format like this:
+  
+  **[CLASS_NAME]** | Day: [DAY] | Time: [TIME] | Instructor: [INSTRUCTOR]
+
+- Mention instructor ONLY when it's relevant to their needs (e.g., "Meera knows how to work with prenatal students" or "Rohan's style matches your preference")
+- Skip the marketing speak - just give practical, personalized advice
+- If they ask a simple question, give a simple answer (1-2 sentences)
+
+Talk naturally, like you genuinely know them:`;
+      }
+
+      function parseClassRecommendations(text) {
+        const classes = [];
+        // Pattern: **[CLASS_NAME]** | Day: [DAY] | Time: [TIME] | Instructor: [INSTRUCTOR]
+        const pattern =
+          /\*\*([^*]+)\*\*\s*\|\s*Day:\s*([^|]+)\|\s*Time:\s*([^|]+)\|\s*Instructor:\s*(.+?)(?=\n|$)/gi;
+
+        let match;
+        while ((match = pattern.exec(text)) !== null) {
+          classes.push({
+            name: match[1].trim(),
+            day: match[2].trim(),
+            time: match[3].trim(),
+            instructor: match[4].trim(),
+          });
+        }
+
+        return classes;
+      }
+
+      function addMessage(type, text, classes = []) {
+        const chatContainer = document.getElementById("chatContainer");
+        const messageDiv = document.createElement("div");
+        messageDiv.className = `message ${type}`;
+
+        const personaInitials = {
+          sheila: "S",
+          ritvik: "R",
+          gaurav: "G",
+        };
+
+        const avatarContent =
+          type === "user"
+            ? currentPersona
+              ? personaInitials[currentPersona]
+              : "U"
+            : "🧘";
+
+        // Render markdown
+        const htmlContent = marked.parse(text);
+
+        let classOptionsHtml = "";
+        if (classes.length > 0) {
+          classOptionsHtml = '<div class="class-options">';
+          classes.forEach((cls, index) => {
+            const classId = `class-${Date.now()}-${index}`;
+            classOptionsHtml += `
+                        <div class="class-card" data-class-id="${classId}" data-class='${JSON.stringify(
+              cls
+            )}'>
+                            <div class="class-checkbox"></div>
+                            <div class="class-info">
+                                <div class="class-name">${cls.name}</div>
+                                <div class="class-details">
+                                    <span class="class-detail-item">📅 ${
+                                      cls.day
+                                    }</span>
+                                    <span class="class-detail-item">🕐 ${
+                                      cls.time
+                                    }</span>
+                                    <span class="class-detail-item">👤 ${
+                                      cls.instructor
+                                    }</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+          });
+          classOptionsHtml += `
+                    <button class="confirm-selection-btn" disabled>
+                        Confirm Selected Classes
+                    </button>
+                </div>`;
+        }
+
+        messageDiv.innerHTML = `
+                <div class="avatar">${avatarContent}</div>
+                <div class="message-content">
+                    ${htmlContent}
+                    ${classOptionsHtml}
+                </div>
+            `;
+
+        chatContainer.appendChild(messageDiv);
+
+        // Add event listeners to class cards
+        if (classes.length > 0) {
+          const cards = messageDiv.querySelectorAll(".class-card");
+          const confirmBtn = messageDiv.querySelector(".confirm-selection-btn");
+
+          cards.forEach((card) => {
+            card.addEventListener("click", function () {
+              this.classList.toggle("selected");
+              updateConfirmButton(messageDiv);
+            });
+          });
+
+          confirmBtn.addEventListener("click", function () {
+            handleClassConfirmation(messageDiv);
+          });
+        }
+
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+
+      function updateConfirmButton(messageDiv) {
+        const confirmBtn = messageDiv.querySelector(".confirm-selection-btn");
+        const selectedCards = messageDiv.querySelectorAll(
+          ".class-card.selected"
+        );
+
+        if (selectedCards.length > 0) {
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = `Confirm ${
+            selectedCards.length
+          } Selected Class${selectedCards.length > 1 ? "es" : ""}`;
+        } else {
+          confirmBtn.disabled = true;
+          confirmBtn.textContent = "Confirm Selected Classes";
+        }
+      }
+
+      function handleClassConfirmation(messageDiv) {
+        const selectedCards = messageDiv.querySelectorAll(
+          ".class-card.selected"
+        );
+        const selectedClassesData = Array.from(selectedCards).map((card) =>
+          JSON.parse(card.dataset.class)
+        );
+
+        if (selectedClassesData.length === 0) return;
+
+        // Create confirmation message
+        let confirmationText = `Great! I've noted your selection:\n\n`;
+        selectedClassesData.forEach((cls) => {
+          confirmationText += `✅ **${cls.name}** on ${cls.day} at ${cls.time} with ${cls.instructor}\n`;
+        });
+        confirmationText += `\nYour classes are ready to be booked. Would you like me to help you with anything else?`;
+
+        addMessage(
+          "user",
+          `I'd like to book: ${selectedClassesData
+            .map((c) => c.name)
+            .join(", ")}`
+        );
+        addMessage("assistant", confirmationText);
+
+        // Disable the cards after confirmation
+        selectedCards.forEach((card) => {
+          card.style.opacity = "0.6";
+          card.style.pointerEvents = "none";
+        });
+        messageDiv.querySelector(".confirm-selection-btn").disabled = true;
+        messageDiv.querySelector(".confirm-selection-btn").textContent =
+          "Confirmed ✓";
+      }
+
+      function showToolCallIndicator() {
+        const chatContainer = document.getElementById("chatContainer");
+        const messageDiv = document.createElement("div");
+        messageDiv.className = "message assistant";
+        messageDiv.innerHTML = `
+                <div class="avatar">🧘</div>
+                <div class="message-content" style="font-size: 14px; color: #6c757d; line-height: 1.8;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                        <span>📅</span>
+                        <span>Checking your calendar...</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; opacity: 0; animation: fadeIn 0.5s ease 0.8s forwards;">
+                        <span>🧠</span>
+                        <span>Reviewing your preferences...</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; opacity: 0; animation: fadeIn 0.5s ease 1.6s forwards;">
+                        <span>✨</span>
+                        <span>Creating personalized recommendations...</span>
+                    </div>
+                </div>
+            `;
+        chatContainer.appendChild(messageDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        return messageDiv;
+      }
+
+      function showTypingIndicator() {
+        const chatContainer = document.getElementById("chatContainer");
+        const messageDiv = document.createElement("div");
+        messageDiv.className = "message assistant";
+        messageDiv.innerHTML = `
+                <div class="avatar">🧘</div>
+                <div class="message-content">
+                    <div class="typing-indicator">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            `;
+        chatContainer.appendChild(messageDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        return messageDiv;
+      }
+
+      function showError(message) {
+        const chatContainer = document.getElementById("chatContainer");
+        const errorDiv = document.createElement("div");
+        errorDiv.className = "error-message";
+        errorDiv.textContent = message;
+        chatContainer.appendChild(errorDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    </script>
+  </body>
+</html>

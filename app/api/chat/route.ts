@@ -4,7 +4,6 @@ import {
   smoothStream,
   stepCountIs,
   streamText,
-  tool,
 } from "ai";
 import { z } from "zod";
 
@@ -112,16 +111,23 @@ ${selectedPersona.calendar}
 ${samaSchedule}
 
 INSTRUCTIONS:
-- Be warm, calm, and professional - matching SAMA's mindful wellness approach
-- Analyze their schedule to find free time slots
-- Match classes to their preferences, health conditions, and goals
-- Suggest specific classes with times, considering their constraints
-- Be very concise but helpful - no more than 2-3 sentences unless they ask for details
-- If they ask about a specific day, check their calendar conflicts and suggest available SAMA classes
-- Always mention the instructor name when recommending classes
-- Consider their physical limitations and preferences when suggesting classes
+- Speak like a caring concierge helping a friend: warm, concise, confident
+- Open with 1 short line that references their day (meetings/commitments) to set context
+- ALWAYS give a PRIMARY option and, when possible, ONE BACKUP option (earlier or later) that does not conflict with their calendar
+- Keep total length to roughly 80–120 words; specific but not verbose
+- ONLY suggest classes that truly fit open time; never include conflicting options
+- Naturally reference their calendar (e.g., "Since you’re free after 12:30 PM…") and their preferences/constraints
+- Use this exact formatting for any class you mention (each on its own line):
+  
+  **[CLASS_NAME]** | Day: [DAY] | Time: [TIME] | Instructor: [INSTRUCTOR]
 
-Respond naturally and helpfully.`;
+- After the options, add one brief rationale sentence tailored to them
+- End with a friendly closing question (e.g., "Shall I reserve the first one?")
+- Mention instructor only when meaningfully relevant
+- Skip marketing language; be practical and personal
+- If they ask a simple question, answer in 1–2 sentences
+
+Tone guideline: talk naturally, like you genuinely know them:`;
 
   const result = streamText({
     model: openai("gpt-4o-mini"),
@@ -142,6 +148,53 @@ Respond naturally and helpfully.`;
             message: instructor
               ? `Class ${className} booked for ${date} at ${time} with instructor ${instructor}`
               : `Class ${className} booked for ${date} at ${time}`,
+          };
+        },
+      },
+      fetchCalendar: {
+        description: "Fetch user's calendar events for a specific date",
+        inputSchema: z.object({
+          date: z.string(),
+        }),
+        execute: async ({ date }) => {
+          await new Promise((resolve) => setTimeout(resolve, 5000));
+          // Dummy events – purely for UI demonstration
+          const events = [
+            {
+              title: "Team standup",
+              date,
+              time: "7:30-8:00 AM",
+              location: "Zoom",
+              with: "Eng Team",
+            },
+            {
+              title: "Deep work / Coding",
+              date,
+              time: "10:00 AM-12:00 PM",
+              location: "Home Office",
+            },
+            {
+              title: "1-on-1 with manager",
+              date,
+              time: "2:00-3:00 PM",
+              location: "Conference Room B",
+              with: "Manager",
+            },
+          ];
+          return {
+            success: true,
+            message: `Found ${events.length} events on ${date}.`,
+            events,
+          } as {
+            success: boolean;
+            message: string;
+            events: Array<{
+              title: string;
+              date: string;
+              time: string;
+              location?: string;
+              with?: string;
+            }>;
           };
         },
       },
