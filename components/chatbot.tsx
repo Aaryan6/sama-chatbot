@@ -29,6 +29,7 @@ import {
   MessageAvatar,
 } from "@/components/ai-elements/message";
 import { Response } from "@/components/ai-elements/response";
+import { Suggestions, Suggestion } from "@/components/ai-elements/suggestion";
 import {
   Popover,
   PopoverContent,
@@ -37,6 +38,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { BookClassDisplay } from "@/components/ai-elements/book-class";
+import { Badge } from "./ui/badge";
 
 type Persona = "sheila" | "ritvik" | "gaurav";
 
@@ -61,27 +64,11 @@ const personaData = {
   },
 };
 
-const suggestionCards = [
-  {
-    icon: "🍽️",
-    title: "Quick Class Recommendations",
-    description: "Find classes that fit your schedule today",
-  },
-  {
-    icon: "🧘",
-    title: "Browse Class Types",
-    description: "Explore yoga, pilates, and meditation options",
-  },
-  {
-    icon: "📅",
-    title: "Check Weekly Schedule",
-    description: "View all available classes this week",
-  },
-  {
-    icon: "✨",
-    title: "Wellness Tips",
-    description: "Get personalized wellness advice",
-  },
+const suggestions = [
+  "Find classes that fit my schedule today",
+  "Explore yoga, pilates, and meditation",
+  "View all available classes this week",
+  "Get personalized wellness advice",
 ];
 
 export default function Chatbot() {
@@ -113,12 +100,7 @@ export default function Chatbot() {
     }
   };
 
-  const getMessageText = (message: (typeof messages)[0]) => {
-    return message.parts
-      .filter((part) => part.type === "text")
-      .map((part) => (part.type === "text" ? part.text : ""))
-      .join("");
-  };
+  console.log({ messages });
 
   return (
     <div className="w-full mx-auto max-w-4xl h-full rounded-2xl overflow-hidden flex flex-col bg-background">
@@ -272,33 +254,6 @@ export default function Chatbot() {
                         How can I help you today?
                       </p>
                     </div>
-
-                    {/* Suggestion Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl">
-                      {suggestionCards.map((card, index) => (
-                        <button
-                          key={index}
-                          onClick={() =>
-                            handleSuggestionClick(card.description)
-                          }
-                          className="group relative p-4 rounded-2xl border border-border bg-card hover:bg-accent hover:border-accent-foreground/20 transition-all duration-200 text-left"
-                        >
-                          <div className="flex flex-col gap-2">
-                            <div className="flex items-center gap-2">
-                              <span className="text-2xl">{card.icon}</span>
-                            </div>
-                            <div className="space-y-1">
-                              <p className="font-medium text-sm text-foreground">
-                                {card.title}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {card.description}
-                              </p>
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
                   </div>
                 )}
 
@@ -312,7 +267,49 @@ export default function Chatbot() {
                           message.role === "user" ? "ml-auto" : ""
                         )}
                       >
-                        <Response>{getMessageText(message)}</Response>
+                        {/* Render tool calls */}
+                        {message.parts.map((part, index) => {
+                          const { type } = part;
+                          if (type === "text") {
+                            return <Response key={index}>{part.text}</Response>;
+                          }
+                          if (type === "tool-bookClass") {
+                            const { state } = part;
+                            // Show UI for input-available (in-progress) and output-available (completed) states
+                            // if (state === "input-streaming") {
+                            //   return <Badge key={index}>Processing...</Badge>;
+                            // }
+                            if (
+                              state === "output-available" ||
+                              state === "input-available"
+                            ) {
+                              const { output, input } = part;
+                              return (
+                                <div key={index} className="mt-3 first:mt-0">
+                                  <BookClassDisplay
+                                    part={{
+                                      type: part.type,
+                                      result:
+                                        state === "output-available"
+                                          ? (output as {
+                                              success: boolean;
+                                              message: string;
+                                            })
+                                          : undefined,
+                                      input: input as {
+                                        className: string;
+                                        date: string;
+                                        time: string;
+                                        instructor?: string;
+                                      },
+                                    }}
+                                  />
+                                </div>
+                              );
+                            }
+                          }
+                          return null;
+                        })}
                       </MessageContent>
                       {message.role === "assistant" && (
                         <MessageAvatar
@@ -371,6 +368,23 @@ export default function Chatbot() {
             </Conversation>
           </div>
 
+          {/* Suggestion Pills */}
+          <Suggestions
+            className={cn(
+              "mt-auto mx-auto w-full max-w-3xl pb-2 flex-col justify-end items-end",
+              status === "streaming" || (status === "submitted" && "hidden"),
+              messages.length > 0 && "flex-row justify-start"
+            )}
+          >
+            {suggestions.map((suggestion, index) => (
+              <Suggestion
+                key={index}
+                suggestion={suggestion}
+                onClick={handleSuggestionClick}
+              />
+            ))}
+          </Suggestions>
+
           {/* Input Area */}
           <div className="border-t bg-background px-4 py-4">
             <div className="max-w-3xl mx-auto">
@@ -396,7 +410,7 @@ export default function Chatbot() {
                 <PromptInputTextarea
                   placeholder="Write your prompt..."
                   disabled={!selectedPersona || status !== "ready"}
-                  className="min-h-[52px]"
+                  className="min-h-[52px] text-black"
                 />
                 <PromptInputActions className="">
                   <PromptInputAction

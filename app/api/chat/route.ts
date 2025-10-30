@@ -1,5 +1,12 @@
-import { google } from "@ai-sdk/google";
-import { convertToModelMessages, smoothStream, streamText } from "ai";
+import { openai } from "@ai-sdk/openai";
+import {
+  convertToModelMessages,
+  smoothStream,
+  stepCountIs,
+  streamText,
+  tool,
+} from "ai";
+import { z } from "zod";
 
 export const maxDuration = 30;
 
@@ -117,12 +124,33 @@ INSTRUCTIONS:
 Respond naturally and helpfully.`;
 
   const result = streamText({
-    model: google("gemini-2.5-flash"),
+    model: openai("gpt-4o-mini"),
     system: systemPrompt,
+    tools: {
+      bookClass: {
+        description: "Book a class",
+        inputSchema: z.object({
+          className: z.string(),
+          date: z.string(),
+          time: z.string(),
+          instructor: z.string().optional(),
+        }),
+        execute: async ({ className, date, time, instructor }) => {
+          await new Promise((resolve) => setTimeout(resolve, 6000));
+          return {
+            success: true,
+            message: instructor
+              ? `Class ${className} booked for ${date} at ${time} with instructor ${instructor}`
+              : `Class ${className} booked for ${date} at ${time}`,
+          };
+        },
+      },
+    },
     experimental_transform: smoothStream({
       delayInMs: 30,
       chunking: "word",
     }),
+    stopWhen: stepCountIs(6),
     messages: convertToModelMessages(messages),
   });
 
