@@ -1,8 +1,8 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
-import { useState, useRef, useEffect } from "react";
+import { DefaultChatTransport, UIMessage } from "ai";
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -12,11 +12,26 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import {
+  PromptInput,
+  PromptInputTextarea,
+  PromptInputActions,
+  PromptInputAction,
+} from "@/components/ui/prompt-input";
 import { Send } from "lucide-react";
+import {
+  Conversation,
+  ConversationContent,
+  ConversationEmptyState,
+  ConversationScrollButton,
+} from "@/components/ai-elements/conversation";
+import {
+  Message,
+  MessageContent,
+  MessageAvatar,
+} from "@/components/ai-elements/message";
+import { Response } from "@/components/ai-elements/response";
 
 type Persona = "sheila" | "ritvik" | "gaurav";
 
@@ -24,41 +39,47 @@ export default function Chatbot() {
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
   const [input, setInput] = useState("");
 
-  const { messages, sendMessage, status } = useChat({
-    transport: new DefaultChatTransport({
-      api: "/api/chat",
-    }),
-  });
-
-  const chatContainerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop =
-        chatContainerRef.current.scrollHeight;
-    }
-  }, [messages]);
-
-  const selectPersona = (persona: Persona) => {
-    setSelectedPersona(persona);
-  };
-
   const personaNames = {
     sheila: "Sheila",
     ritvik: "Ritvik",
     gaurav: "Gaurav",
   };
 
-  const personaInitials = {
-    sheila: "S",
-    ritvik: "R",
-    gaurav: "G",
+  const { messages, sendMessage, status } = useChat({
+    transport: new DefaultChatTransport({
+      api: "/api/chat",
+    }),
+    messages: [
+      {
+        id: "1",
+        role: "assistant",
+        parts: [
+          {
+            type: "text",
+            text: selectedPersona
+              ? `Hello! I'm your SAMA Studio assistant for ${personaNames[selectedPersona]}. I have access to your schedule, preferences, and our class timetable. How can I help you find the perfect class?`
+              : "Hello! I'm your SAMA Studio assistant. I have access to your schedule, preferences, and our class timetable. How can I help you find the perfect class?",
+          },
+        ],
+      },
+    ],
+  });
+
+  const selectPersona = (persona: Persona) => {
+    setSelectedPersona(persona);
   };
 
   const personaColors = {
     sheila: "bg-pink-500",
     ritvik: "bg-blue-500",
     gaurav: "bg-purple-500",
+  };
+
+  const getMessageText = (message: UIMessage) => {
+    return message.parts
+      .filter((part) => part.type === "text")
+      .map((part) => (part.type === "text" ? part.text : ""))
+      .join("");
   };
 
   return (
@@ -84,78 +105,68 @@ export default function Chatbot() {
       </CardHeader>
 
       <CardContent className="flex-1 overflow-hidden p-0">
-        <ScrollArea className="h-full">
-          <div ref={chatContainerRef} className="p-6 space-y-4">
+        <Conversation className="h-full">
+          <ConversationContent>
             {messages.length === 0 && !selectedPersona && (
-              <div className="text-center py-10 text-muted-foreground">
-                <h2 className="text-xl font-semibold mb-3">
-                  Welcome to SAMA Studio
-                </h2>
-                <p className="text-sm leading-relaxed">
-                  Select a persona above to start scheduling your wellness
-                  classes.
-                  <br />
-                  I&apos;ll help you find the perfect class times based on your
-                  schedule and preferences.
-                </p>
-              </div>
+              <ConversationEmptyState
+                title="Welcome to SAMA Studio"
+                description="Select a persona above to start scheduling your wellness classes. I'll help you find the perfect class times based on your schedule and preferences."
+                icon={<span className="text-4xl">🧘</span>}
+              />
             )}
-
+            {/* 
             {messages.length === 0 && selectedPersona && (
-              <div className="flex gap-3 items-start">
-                <Avatar>
-                  <AvatarFallback className="bg-primary text-primary-foreground">
-                    🧘
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold">
+              <Message from="assistant">
+                <MessageAvatar
+                  src="/assistant-avatar.png"
+                  name="SAMA"
+                  className="bg-primary text-primary-foreground"
+                />
+                <MessageContent variant="flat">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-semibold">
                       SAMA Assistant
                     </span>
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="text-xs h-4 px-1.5">
                       AI
                     </Badge>
                   </div>
-                  <div className="bg-muted rounded-lg p-3 text-sm">
+                  <Response>
                     Hello! I&apos;m your SAMA Studio assistant for{" "}
                     {personaNames[selectedPersona]}. I have access to your
                     schedule, preferences, and our class timetable. How can I
                     help you find the perfect class?
-                  </div>
-                </div>
-              </div>
-            )}
+                  </Response>
+                </MessageContent>
+              </Message>
+            )} */}
 
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex gap-3 items-start ${
-                  message.role === "user" ? "flex-row-reverse" : ""
-                }`}
-              >
-                <Avatar>
-                  <AvatarFallback
-                    className={
-                      message.role === "user" && selectedPersona
-                        ? `${personaColors[selectedPersona]} text-white`
-                        : "bg-primary text-primary-foreground"
-                    }
-                  >
-                    {message.role === "user"
+            {messages.map((message: UIMessage) => (
+              <Message key={message.id} from={message.role}>
+                {/* <MessageAvatar
+                  src={
+                    message.role === "user"
+                      ? "/user-avatar.png"
+                      : "/assistant-avatar.png"
+                  }
+                  name={
+                    message.role === "user"
                       ? selectedPersona
-                        ? personaInitials[selectedPersona]
-                        : "U"
-                      : "🧘"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 space-y-2">
-                  <div
-                    className={`flex items-center gap-2 ${
-                      message.role === "user" ? "flex-row-reverse" : ""
-                    }`}
-                  >
-                    <span className="text-sm font-semibold">
+                        ? personaNames[selectedPersona]
+                        : "You"
+                      : "SAMA"
+                  }
+                  className={
+                    message.role === "user" && selectedPersona
+                      ? `${personaColors[selectedPersona]} text-white`
+                      : "bg-primary text-primary-foreground"
+                  }
+                /> */}
+                <MessageContent
+                  variant={message.role === "user" ? "contained" : "flat"}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-semibold">
                       {message.role === "user"
                         ? selectedPersona
                           ? personaNames[selectedPersona]
@@ -163,27 +174,14 @@ export default function Chatbot() {
                         : "SAMA Assistant"}
                     </span>
                     {message.role === "assistant" && (
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className="text-xs h-4 px-1.5">
                         AI
                       </Badge>
                     )}
                   </div>
-                  <div
-                    className={`rounded-lg p-3 text-sm ${
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground ml-auto"
-                        : "bg-muted"
-                    }`}
-                  >
-                    {message.parts.map((part, index) => {
-                      if (part.type === "text") {
-                        return <span key={index}>{part.text}</span>;
-                      }
-                      return null;
-                    })}
-                  </div>
-                </div>
-              </div>
+                  <Response>{getMessageText(message)}</Response>
+                </MessageContent>
+              </Message>
             ))}
 
             {(status === "submitted" ||
@@ -193,48 +191,49 @@ export default function Chatbot() {
                 !messages[messages.length - 1].parts.some(
                   (p) => p.type === "text" && p.text.trim().length > 0
                 ))) && (
-              <div className="flex gap-3 items-start">
-                <Avatar>
-                  <AvatarFallback className="bg-primary text-primary-foreground">
-                    🧘
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold">
+              <Message from="assistant">
+                <MessageAvatar
+                  src="/assistant-avatar.png"
+                  name="SAMA"
+                  className="bg-primary text-primary-foreground"
+                />
+                <MessageContent variant="flat">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-semibold">
                       SAMA Assistant
                     </span>
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="text-xs h-4 px-1.5">
                       AI
                     </Badge>
                   </div>
-                  <div className="bg-muted rounded-lg p-3">
-                    <div className="flex gap-1">
-                      <span
-                        className="w-2 h-2 rounded-full bg-primary animate-bounce"
-                        style={{ animationDelay: "0ms" }}
-                      ></span>
-                      <span
-                        className="w-2 h-2 rounded-full bg-primary animate-bounce"
-                        style={{ animationDelay: "150ms" }}
-                      ></span>
-                      <span
-                        className="w-2 h-2 rounded-full bg-primary animate-bounce"
-                        style={{ animationDelay: "300ms" }}
-                      ></span>
-                    </div>
+                  <div className="flex gap-1">
+                    <span
+                      className="w-2 h-2 rounded-full bg-primary animate-bounce"
+                      style={{ animationDelay: "0ms" }}
+                    ></span>
+                    <span
+                      className="w-2 h-2 rounded-full bg-primary animate-bounce"
+                      style={{ animationDelay: "150ms" }}
+                    ></span>
+                    <span
+                      className="w-2 h-2 rounded-full bg-primary animate-bounce"
+                      style={{ animationDelay: "300ms" }}
+                    ></span>
                   </div>
-                </div>
-              </div>
+                </MessageContent>
+              </Message>
             )}
-          </div>
-        </ScrollArea>
+          </ConversationContent>
+          <ConversationScrollButton />
+        </Conversation>
       </CardContent>
 
       <CardFooter className="border-t p-4">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
+        <PromptInput
+          value={input}
+          onValueChange={setInput}
+          isLoading={status !== "ready"}
+          onSubmit={() => {
             if (input.trim() && selectedPersona) {
               sendMessage(
                 { text: input },
@@ -247,28 +246,43 @@ export default function Chatbot() {
               setInput("");
             }
           }}
-          className="flex w-full gap-2"
+          className="w-full"
         >
-          <Input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
+          <PromptInputTextarea
             placeholder={
               selectedPersona
-                ? `Ask about class scheduling...`
+                ? "Ask about class scheduling..."
                 : "Select a persona first..."
             }
             disabled={!selectedPersona || status !== "ready"}
-            className="flex-1"
           />
-          <Button
-            type="submit"
-            disabled={!selectedPersona || status !== "ready" || !input.trim()}
-            size="icon"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-        </form>
+          <PromptInputActions>
+            <PromptInputAction tooltip="Send message (Enter)">
+              <Button
+                onClick={() => {
+                  if (input.trim() && selectedPersona) {
+                    sendMessage(
+                      { text: input },
+                      {
+                        body: {
+                          persona: selectedPersona,
+                        },
+                      }
+                    );
+                    setInput("");
+                  }
+                }}
+                disabled={
+                  !selectedPersona || status !== "ready" || !input.trim()
+                }
+                size="icon"
+                className="size-8"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </PromptInputAction>
+          </PromptInputActions>
+        </PromptInput>
       </CardFooter>
     </Card>
   );
