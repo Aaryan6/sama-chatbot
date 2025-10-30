@@ -98,9 +98,19 @@ export async function POST(req: Request) {
     return new Response("Invalid persona", { status: 400 });
   }
 
+  // Get current date
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
   const systemPrompt = `You are a premium wellness scheduling assistant for SAMA Studio in Bangalore. You're helping ${
     selectedPersona.name
   }.
+
+CURRENT DATE: ${currentDate}
 
 PERSONA INFORMATION:
 ${selectedPersona.memories}
@@ -112,17 +122,17 @@ ${samaSchedule}
 
 TOOL USAGE RULES - CRITICAL - READ THIS FIRST:
 ==============================================
-MANDATORY RULE: If the user wants to book, schedule, add, or attend ANY class, you MUST call the bookClass tool. DO NOT just list classes in text format.
+MANDATORY RULE: If the user wants to book, schedule, add, or attend ANY class, you MUST call the showClassOptions tool. DO NOT just list classes in text format.
 
-When to call bookClass tool with mode='selection':
+When to call showClassOptions tool:
 - User says: "I want to add class", "book a class", "schedule me", "find me a class", "I want to attend", "sign me up", "reserve a spot", "add to my schedule", "reschedule", "change my booking"
 - User asks about availability: "Can I do yoga tomorrow?", "What classes are free on Wednesday?"
 - User mentions wanting to join or attend a class
 - ANY request that implies they want to book or schedule a class
 
-How to use the tool:
+How to use showClassOptions tool:
 1. First, write a brief 1-2 sentence introduction referencing their calendar
-2. IMMEDIATELY call the bookClass tool with mode='selection' and provide an array of 2-3 suitable classes:
+2. IMMEDIATELY call the showClassOptions tool and provide an array of 2-3 suitable classes:
    - Each class object must have: className, date, time, instructor (optional)
    - Include a PRIMARY option and BACKUP options
    - Only include classes that don't conflict with their calendar
@@ -130,13 +140,14 @@ How to use the tool:
 
 Example response structure:
 "Since you're free after your Investor relations meeting Wednesday morning, here are some great options:"
-[CALL bookClass tool with classes array]
+[CALL showClassOptions tool with classes array]
 "Both classes work well with your schedule and preferences."
 
-When user confirms (e.g., "Yes, book these classes: X, Y"):
-- Call bookClass with mode='confirm', ALL originally shown classes, and selectedIndices
+When user confirms their selection (e.g., "Yes, book these classes: X, Y"):
+- Call confirmBooking tool with the bookedClasses array containing only the classes they selected
+- The confirmBooking tool will show a success message with green checkmarks
 
-IMPORTANT: Never just list classes as bullet points in text. ALWAYS use the tool to show interactive checkboxes.
+IMPORTANT: Never just list classes as bullet points in text. ALWAYS use the showClassOptions tool to show interactive checkboxes.
 
 CONVERSATIONAL GUIDELINES:
 - Speak like a caring concierge: warm, concise, confident
@@ -152,9 +163,9 @@ Tone: Talk naturally, like you genuinely know them`;
     model: openai("gpt-4o"),
     system: systemPrompt,
     tools: {
-      bookClass: {
+      showClassOptions: {
         description:
-          "REQUIRED tool for showing classes to book/schedule. Use this whenever user wants to add, book, schedule, or attend classes. Shows interactive checkbox UI for class selection. DO NOT list classes as text - ALWAYS use this tool.",
+          "REQUIRED tool for showing available classes to book/schedule. Use this whenever user wants to add, book, schedule, or attend classes. Shows interactive checkbox UI for class selection. DO NOT list classes as text - ALWAYS use this tool.",
         inputSchema: z.object({
           classes: z.array(
             z.object({
@@ -164,59 +175,37 @@ Tone: Talk naturally, like you genuinely know them`;
               instructor: z.string().optional(),
             })
           ),
-          mode: z
-            .enum(["selection", "confirm"])
-            .optional()
-            .describe(
-              "Use 'selection' to show classes for selection, 'confirm' to book selected classes"
-            ),
-          selectedIndices: z
-            .array(z.number())
-            .optional()
-            .describe("Indices of selected classes to book (for confirm mode)"),
         }),
-        execute: async ({ classes, mode = "selection", selectedIndices }) => {
-          if (mode === "confirm") {
-            // Simulate booking delay
-            await new Promise((resolve) => setTimeout(resolve, 3000));
-            const bookedClasses = selectedIndices
-              ? selectedIndices.map((idx) => classes[idx])
-              : classes;
-            return {
-              success: true,
-              mode: "confirm",
-              bookedClasses,
-              message: `Successfully booked ${bookedClasses.length} ${
-                bookedClasses.length === 1 ? "class" : "classes"
-              }`,
-            } as {
-              success: boolean;
-              mode: "confirm";
-              bookedClasses: Array<{
-                className: string;
-                date: string;
-                time: string;
-                instructor?: string;
-              }>;
-              message: string;
-            };
-          }
-          // Selection mode - just return the classes for display
+        execute: async ({ classes }) => {
           return {
             success: true,
-            mode: "selection",
             classes,
             message: "Please select the classes you want to book",
-          } as {
-            success: boolean;
-            mode: "selection";
-            classes: Array<{
-              className: string;
-              date: string;
-              time: string;
-              instructor?: string;
-            }>;
-            message: string;
+          };
+        },
+      },
+      confirmBooking: {
+        description:
+          "Confirms and books the selected classes. Call this after user selects classes from showClassOptions.",
+        inputSchema: z.object({
+          bookedClasses: z.array(
+            z.object({
+              className: z.string(),
+              date: z.string(),
+              time: z.string(),
+              instructor: z.string().optional(),
+            })
+          ),
+        }),
+        execute: async ({ bookedClasses }) => {
+          // Simulate booking delay
+          await new Promise((resolve) => setTimeout(resolve, 3000));
+          return {
+            success: true,
+            bookedClasses,
+            message: `Successfully booked ${bookedClasses.length} ${
+              bookedClasses.length === 1 ? "class" : "classes"
+            }`,
           };
         },
       },

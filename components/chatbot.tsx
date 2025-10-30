@@ -10,7 +10,7 @@ import {
   PromptInputActions,
   PromptInputAction,
 } from "@/components/ui/prompt-input";
-import { Send, ChevronDown, Check, ArrowLeft } from "lucide-react";
+import { Send, ArrowLeft } from "lucide-react";
 import {
   Conversation,
   ConversationContent,
@@ -23,18 +23,13 @@ import {
 } from "@/components/ai-elements/message";
 import { Response } from "@/components/ai-elements/response";
 import { Suggestions, Suggestion } from "@/components/ai-elements/suggestion";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { cn } from "@/lib/utils";
 import { BookClassDisplay } from "@/components/ai-elements/book-class";
 import { BookClassSelectionDisplay } from "@/components/ai-elements/book-class-selection";
+import { BookingSuccessDisplay } from "@/components/ai-elements/booking-success";
 import { FetchCalendarDisplay } from "@/components/ai-elements/fetch-calendar";
 //
 import { useRouter } from "next/navigation";
@@ -63,7 +58,8 @@ const personaData = {
 };
 
 const suggestions = [
-  "Find classes that fit my schedule today",
+  "I want to add class on wednesday",
+  "Find classes that fit my schedule",
   "Explore yoga, pilates, and meditation",
   "View all available classes this week",
   "Get personalized wellness advice",
@@ -93,8 +89,8 @@ export default function Chatbot({ preSelectedPersona }: ChatbotProps) {
   });
 
   const selectPersona = (persona: Persona) => {
-    setSelectedPersona(persona);
     setMessages([]);
+    setSelectedPersona(persona);
     // Update URL search params
     router.push(`/chat?persona=${persona}`);
   };
@@ -200,48 +196,16 @@ export default function Chatbot({ preSelectedPersona }: ChatbotProps) {
                 </div>
               </div>
 
-              {/* Persona Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="flex items-center gap-2 h-9"
-                  >
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage
-                        src={personaData[selectedPersona].image}
-                        alt={personaData[selectedPersona].name}
-                      />
-                      <AvatarFallback
-                        className={cn(
-                          personaData[selectedPersona].color,
-                          "text-white text-xs"
-                        )}
-                      >
-                        {personaData[selectedPersona].name[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm font-medium">
-                      {personaData[selectedPersona].name}
-                    </span>
-                    <ChevronDown className="h-4 w-4 opacity-50" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-80" align="end">
-                  <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
-                    Select Persona
-                  </DropdownMenuLabel>
+              {/* Persona Tabs */}
+              <Tabs
+                value={selectedPersona}
+                onValueChange={(value) => selectPersona(value as Persona)}
+              >
+                <TabsList>
                   {(["sheila", "ritvik", "gaurav"] as Persona[]).map(
                     (persona) => (
-                      <DropdownMenuItem
-                        key={persona}
-                        onClick={() => selectPersona(persona)}
-                        className={cn(
-                          "flex items-center gap-3 p-3 cursor-pointer",
-                          selectedPersona === persona && "bg-accent"
-                        )}
-                      >
-                        <Avatar className="h-10 w-10">
+                      <TabsTrigger key={persona} value={persona}>
+                        <Avatar className="h-5 w-5 mr-1.5">
                           <AvatarImage
                             src={personaData[persona].image}
                             alt={personaData[persona].name}
@@ -249,28 +213,18 @@ export default function Chatbot({ preSelectedPersona }: ChatbotProps) {
                           <AvatarFallback
                             className={cn(
                               personaData[persona].color,
-                              "text-white"
+                              "text-white text-xs"
                             )}
                           >
                             {personaData[persona].name[0]}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="flex-1 text-left">
-                          <p className="text-sm font-medium">
-                            {personaData[persona].name}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {personaData[persona].description}
-                          </p>
-                        </div>
-                        {selectedPersona === persona && (
-                          <Check className="h-4 w-4 text-primary" />
-                        )}
-                      </DropdownMenuItem>
+                        {personaData[persona].name}
+                      </TabsTrigger>
                     )
                   )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                </TabsList>
+              </Tabs>
             </div>
           </div>
 
@@ -311,7 +265,7 @@ export default function Chatbot({ preSelectedPersona }: ChatbotProps) {
                           if (type === "text") {
                             return <Response key={index}>{part.text}</Response>;
                           }
-                          if (type === "tool-bookClass") {
+                          if (type === "tool-showClassOptions") {
                             const { state } = part;
                             if (
                               state === "output-available" ||
@@ -319,29 +273,83 @@ export default function Chatbot({ preSelectedPersona }: ChatbotProps) {
                             ) {
                               const { output, input } = part;
                               const typedInput = input as {
-                                classes?: Array<{
+                                classes: Array<{
                                   className: string;
                                   date: string;
                                   time: string;
                                   instructor?: string;
                                 }>;
-                                className?: string;
-                                date?: string;
-                                time?: string;
-                                instructor?: string;
-                                mode?: "selection" | "confirm";
-                                selectedIndices?: number[];
                               };
                               const typedOutput = output as {
                                 success: boolean;
                                 message: string;
-                                mode?: "selection" | "confirm";
                                 classes?: Array<{
                                   className: string;
                                   date: string;
                                   time: string;
                                   instructor?: string;
                                 }>;
+                              };
+
+                              return (
+                                <div key={index} className="mt-3 first:mt-0">
+                                  <BookClassSelectionDisplay
+                                    part={{
+                                      type: part.type,
+                                      result:
+                                        state === "output-available"
+                                          ? typedOutput
+                                          : undefined,
+                                      input: typedInput,
+                                    }}
+                                    onConfirm={(selectedIndices) => {
+                                      if (
+                                        selectedPersona &&
+                                        typedInput?.classes
+                                      ) {
+                                        const selectedClasses =
+                                          selectedIndices.map(
+                                            (idx) => typedInput.classes[idx]
+                                          );
+                                        const classNames = selectedClasses
+                                          .map((c) => c.className)
+                                          .join(", ");
+                                        // Send a confirmation message
+                                        sendMessage(
+                                          {
+                                            text: `Yes, please book these classes: ${classNames}`,
+                                          },
+                                          {
+                                            body: {
+                                              persona: selectedPersona,
+                                            },
+                                          }
+                                        );
+                                      }
+                                    }}
+                                  />
+                                </div>
+                              );
+                            }
+                          }
+                          if (type === "tool-confirmBooking") {
+                            const { state } = part;
+                            if (
+                              state === "output-available" ||
+                              state === "input-available"
+                            ) {
+                              const { output, input } = part;
+                              const typedInput = input as {
+                                bookedClasses: Array<{
+                                  className: string;
+                                  date: string;
+                                  time: string;
+                                  instructor?: string;
+                                }>;
+                              };
+                              const typedOutput = output as {
+                                success: boolean;
+                                message: string;
                                 bookedClasses?: Array<{
                                   className: string;
                                   date: string;
@@ -350,73 +358,29 @@ export default function Chatbot({ preSelectedPersona }: ChatbotProps) {
                                 }>;
                               };
 
-                              // Check if this is the new multi-class format
-                              const isMultiClass =
-                                typedInput?.classes || typedOutput?.classes;
-
-                              if (isMultiClass) {
-                                // Check if there's a confirmation message after this one
-                                const hasConfirmationAfter = messages
-                                  .slice(messageIndex + 1)
-                                  .some((m) =>
-                                    m.parts.some(
-                                      (p) =>
-                                        p.type === "tool-bookClass" &&
-                                        p.state === "output-available" &&
-                                        (p.output as any)?.mode === "confirm"
-                                    )
-                                  );
-
-                                // Hide selection UI if confirmation exists
-                                if (
-                                  hasConfirmationAfter &&
-                                  typedOutput?.mode === "selection"
-                                ) {
-                                  return null;
-                                }
-
-                                return (
-                                  <div key={index} className="mt-3 first:mt-0">
-                                    <BookClassSelectionDisplay
-                                      part={{
-                                        type: part.type,
-                                        result:
-                                          state === "output-available"
-                                            ? typedOutput
-                                            : undefined,
-                                        input: typedInput,
-                                      }}
-                                      onConfirm={(selectedIndices) => {
-                                        if (
-                                          selectedPersona &&
-                                          typedInput?.classes
-                                        ) {
-                                          const selectedClasses =
-                                            selectedIndices.map(
-                                              (idx) => typedInput.classes![idx]
-                                            );
-                                          const classNames = selectedClasses
-                                            .map((c) => c.className)
-                                            .join(", ");
-                                          // Send a confirmation message
-                                          sendMessage(
-                                            {
-                                              text: `Yes, please book these classes: ${classNames}`,
-                                            },
-                                            {
-                                              body: {
-                                                persona: selectedPersona,
-                                              },
-                                            }
-                                          );
-                                        }
-                                      }}
-                                    />
-                                  </div>
-                                );
-                              }
-
-                              // Fallback to old single-class format
+                              return (
+                                <div key={index} className="mt-3 first:mt-0">
+                                  <BookingSuccessDisplay
+                                    part={{
+                                      type: part.type,
+                                      result:
+                                        state === "output-available"
+                                          ? typedOutput
+                                          : undefined,
+                                      input: typedInput,
+                                    }}
+                                  />
+                                </div>
+                              );
+                            }
+                          }
+                          if (type === "tool-bookClass") {
+                            const { state } = part;
+                            if (
+                              state === "output-available" ||
+                              state === "input-available"
+                            ) {
+                              const { output, input } = part;
                               return (
                                 <div key={index} className="mt-3 first:mt-0">
                                   <BookClassDisplay
@@ -478,6 +442,17 @@ export default function Chatbot({ preSelectedPersona }: ChatbotProps) {
                           }
                           return null;
                         })}
+
+                        {/* Show loading indicator inside the message if streaming, has tool calls, but no text yet */}
+                        {message.role === "assistant" &&
+                          status === "streaming" &&
+                          messageIndex === messages.length - 1 &&
+                          !message.parts.some(
+                            (p) => p.type === "text" && p.text.trim().length > 0
+                          ) &&
+                          message.parts.some((p) =>
+                            p.type.startsWith("tool-")
+                          ) && <span>Thinking...</span>}
                       </MessageContent>
                       {message.role === "assistant" && (
                         <MessageAvatar
@@ -497,40 +472,27 @@ export default function Chatbot({ preSelectedPersona }: ChatbotProps) {
                   </div>
                 ))}
 
-                {/* Loading State */}
-                {(status === "submitted" ||
-                  (status === "streaming" &&
-                    messages.length > 0 &&
-                    messages[messages.length - 1].role === "assistant" &&
-                    !messages[messages.length - 1].parts.some(
-                      (p) => p.type === "text" && p.text.trim().length > 0
-                    ))) && (
-                  <div className="mb-6">
-                    <Message from="assistant">
-                      <MessageContent variant="flat">
-                        <div className="flex gap-1.5 p-3">
-                          <span
-                            className="w-2 h-2 rounded-full bg-muted-foreground/60 animate-bounce"
-                            style={{ animationDelay: "0ms" }}
-                          ></span>
-                          <span
-                            className="w-2 h-2 rounded-full bg-muted-foreground/60 animate-bounce"
-                            style={{ animationDelay: "150ms" }}
-                          ></span>
-                          <span
-                            className="w-2 h-2 rounded-full bg-muted-foreground/60 animate-bounce"
-                            style={{ animationDelay: "300ms" }}
-                          ></span>
-                        </div>
-                      </MessageContent>
-                      <MessageAvatar
-                        src="/images/yoga.jpg"
-                        name="SAMA"
-                        className="bg-muted border-2 object-cover rounded-full"
-                      />
-                    </Message>
-                  </div>
-                )}
+                {/* Loading State - Show as separate message when NO tool calls exist yet */}
+                {status === "streaming" &&
+                  messages.length > 0 &&
+                  messages[messages.length - 1].role === "assistant" &&
+                  !messages[messages.length - 1].parts.some(
+                    (p) => p.type === "text" && p.text.trim().length > 0
+                  ) &&
+                  !messages[messages.length - 1].parts.some((p) =>
+                    p.type.startsWith("tool-")
+                  ) && (
+                    <div className="mb-6">
+                      <Message from="assistant">
+                        <MessageContent>Thinking...</MessageContent>
+                        <MessageAvatar
+                          src="/images/yoga.jpg"
+                          name="SAMA"
+                          className="bg-muted border-2 object-cover rounded-full"
+                        />
+                      </Message>
+                    </div>
+                  )}
               </ConversationContent>
               <ConversationScrollButton />
             </Conversation>
