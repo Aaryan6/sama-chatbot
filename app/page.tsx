@@ -1,6 +1,6 @@
 "use client";
 import TypewriterText from "@/components/typewritterText";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -59,18 +59,6 @@ export default function Home() {
                       SIA
                     </div>
                   </div>
-                  <div className="pl-3 sm:pl-4 md:pl-5 lg:pl-5 hidden sm:flex flex-row gap-2 sm:gap-3 md:gap-4 lg:gap-4">
-                    <div className="flex justify-start items-center cursor-pointer pointer-events-none">
-                      <div className="flex flex-col justify-center text-[#527575]/80 text-xs md:text-[13px] font-medium leading-[14px] font-sans">
-                        SAMA
-                      </div>
-                    </div>
-                    <div className="flex justify-start items-center">
-                      <div className="flex flex-col justify-center text-[#527575]/80 text-xs md:text-[13px] font-medium leading-[14px] font-sans">
-                        About
-                      </div>
-                    </div>
-                  </div>
                 </div>
                 <div className="h-6 sm:h-7 md:h-8 flex justify-start items-start gap-2 sm:gap-3 relative z-50 pointer-events-auto">
                   <Link
@@ -100,6 +88,18 @@ export default function Home() {
                     />
                   </div>
 
+                  {/* CTA Button */}
+                  <div className="flex gap-4 mt-4">
+                    <Link href="#personas">
+                      <Button
+                        size="lg"
+                        className="text-base sm:text-lg px-8 py-6"
+                      >
+                        Get Started
+                      </Button>
+                    </Link>
+                  </div>
+
                   <div className="w-full max-w-[506.08px] lg:w-[506.08px] text-center flex justify-center flex-col text-[#527575]/80 sm:text-lg md:text-xl leading-[1.4] sm:leading-[1.45] md:leading-normal lg:leading-7 font-sans px-2 sm:px-4 md:px-0 lg:text-[1.3rem] sm:text-[1.3em] font-medium text-[1.3em]">
                     An intentionally mindful wellness approach thoughtfully
                     crafted for contemporary, fast-paced lives and for achieving
@@ -113,7 +113,10 @@ export default function Home() {
               </div>
 
               {/* Persona Selection Section */}
-              <div className="w-full flex flex-col items-center gap-6 py-12">
+              <div
+                id="personas"
+                className="w-full flex flex-col items-center gap-6 py-12"
+              >
                 <div className="text-center space-y-2">
                   <h2 className="text-2xl md:text-3xl font-semibold text-[#527575]">
                     Who are you scheduling for today?

@@ -17,6 +17,7 @@ import {
   Copy,
   ChevronDown,
   Check,
+  ArrowLeft,
 } from "lucide-react";
 import {
   Conversation,
@@ -175,6 +176,16 @@ export default function Chatbot({ preSelectedPersona }: ChatbotProps) {
           <div className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-10">
             <div className="flex items-center justify-between px-4 py-3 max-w-3xl mx-auto">
               <div className="flex items-center gap-3">
+                {/* Back Button */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => router.push("/")}
+                  className="h-9 w-9"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+
                 <Avatar>
                   <AvatarImage
                     src="/images/yoga.jpg"
