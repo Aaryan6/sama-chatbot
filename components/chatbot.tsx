@@ -31,10 +31,12 @@ import {
 import { Response } from "@/components/ai-elements/response";
 import { Suggestions, Suggestion } from "@/components/ai-elements/suggestion";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -73,7 +75,7 @@ const suggestions = [
 
 export default function Chatbot() {
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(
-    "sheila"
+    null
   );
   const [input, setInput] = useState("");
 
@@ -95,8 +97,15 @@ export default function Chatbot() {
   };
 
   const handleSuggestionClick = (suggestion: string) => {
-    if (selectedPersona) {
-      setInput(suggestion);
+    if (selectedPersona && status === "ready") {
+      sendMessage(
+        { text: suggestion },
+        {
+          body: {
+            persona: selectedPersona,
+          },
+        }
+      );
     }
   };
 
@@ -122,17 +131,37 @@ export default function Chatbot() {
             </div>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-6">
             {(["sheila", "ritvik", "gaurav"] as Persona[]).map((persona) => (
-              <Button
+              <button
                 key={persona}
                 onClick={() => selectPersona(persona)}
-                variant="outline"
-                size="lg"
-                className="text-base"
+                className="flex flex-col items-center gap-4 p-6 rounded-2xl border-2 border-border hover:border-primary hover:bg-accent/50 transition-all duration-200 w-56 group"
               >
-                {personaNames[persona]}
-              </Button>
+                <Avatar className="h-24 w-24 ring-4 ring-background group-hover:ring-primary/20 transition-all">
+                  <AvatarImage
+                    src={personaData[persona].image}
+                    alt={personaData[persona].name}
+                    className="object-cover"
+                  />
+                  <AvatarFallback
+                    className={cn(
+                      personaData[persona].color,
+                      "text-white text-2xl"
+                    )}
+                  >
+                    {personaData[persona].name[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="text-center space-y-1">
+                  <h3 className="text-lg font-semibold text-foreground">
+                    {personaData[persona].name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {personaData[persona].description}
+                  </p>
+                </div>
+              </button>
             ))}
           </div>
         </div>
@@ -160,9 +189,9 @@ export default function Chatbot() {
                 </div>
               </div>
 
-              {/* Persona Popover */}
-              <Popover>
-                <PopoverTrigger asChild>
+              {/* Persona Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
                     className="flex items-center gap-2 h-9"
@@ -186,53 +215,51 @@ export default function Chatbot() {
                     </span>
                     <ChevronDown className="h-4 w-4 opacity-50" />
                   </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 p-2" align="end">
-                  <div className="space-y-1">
-                    <p className="text-xs font-medium text-muted-foreground px-2 py-1.5">
-                      Select Persona
-                    </p>
-                    {(["sheila", "ritvik", "gaurav"] as Persona[]).map(
-                      (persona) => (
-                        <button
-                          key={persona}
-                          onClick={() => setSelectedPersona(persona)}
-                          className={cn(
-                            "flex items-center gap-3 w-full p-3 rounded-lg hover:bg-accent transition-colors",
-                            selectedPersona === persona && "bg-accent"
-                          )}
-                        >
-                          <Avatar className="h-10 w-10">
-                            <AvatarImage
-                              src={personaData[persona].image}
-                              alt={personaData[persona].name}
-                            />
-                            <AvatarFallback
-                              className={cn(
-                                personaData[persona].color,
-                                "text-white"
-                              )}
-                            >
-                              {personaData[persona].name[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 text-left">
-                            <p className="text-sm font-medium">
-                              {personaData[persona].name}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {personaData[persona].description}
-                            </p>
-                          </div>
-                          {selectedPersona === persona && (
-                            <Check className="h-4 w-4 text-primary" />
-                          )}
-                        </button>
-                      )
-                    )}
-                  </div>
-                </PopoverContent>
-              </Popover>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-80" align="end">
+                  <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
+                    Select Persona
+                  </DropdownMenuLabel>
+                  {(["sheila", "ritvik", "gaurav"] as Persona[]).map(
+                    (persona) => (
+                      <DropdownMenuItem
+                        key={persona}
+                        onClick={() => selectPersona(persona)}
+                        className={cn(
+                          "flex items-center gap-3 p-3 cursor-pointer",
+                          selectedPersona === persona && "bg-accent"
+                        )}
+                      >
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage
+                            src={personaData[persona].image}
+                            alt={personaData[persona].name}
+                          />
+                          <AvatarFallback
+                            className={cn(
+                              personaData[persona].color,
+                              "text-white"
+                            )}
+                          >
+                            {personaData[persona].name[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 text-left">
+                          <p className="text-sm font-medium">
+                            {personaData[persona].name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {personaData[persona].description}
+                          </p>
+                        </div>
+                        {selectedPersona === persona && (
+                          <Check className="h-4 w-4 text-primary" />
+                        )}
+                      </DropdownMenuItem>
+                    )
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
@@ -318,10 +345,10 @@ export default function Chatbot() {
                           className="bg-muted border-2 object-cover rounded-full"
                         />
                       )}
-                      {message.role === "user" && (
+                      {message.role === "user" && selectedPersona && (
                         <MessageAvatar
-                          src="/images/sheela.png"
-                          name="SAMA"
+                          src={personaData[selectedPersona].image}
+                          name={personaData[selectedPersona].name}
                           className="bg-muted border-2 object-cover rounded-full"
                         />
                       )}
@@ -412,7 +439,7 @@ export default function Chatbot() {
                   disabled={!selectedPersona || status !== "ready"}
                   className="min-h-[52px] text-black"
                 />
-                <PromptInputActions className="">
+                <PromptInputActions className="justify-end">
                   <PromptInputAction
                     side="right"
                     tooltip="Send message (Enter)"
