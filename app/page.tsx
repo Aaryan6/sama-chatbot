@@ -1,17 +1,43 @@
-'use client'
-import Image from 'next/image'
-import { Button } from '@/components/ui/button'
-import Link from 'next/link'
-import TypewriterText from '@/components/typewritterText'
-import Chatbot from '@/components/chatbot'
+"use client";
+import TypewriterText from "@/components/typewritterText";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useRouter } from "next/navigation";
+
+type Persona = "sheila" | "ritvik" | "gaurav";
+
+const personaData = {
+  sheila: {
+    name: "Sheila",
+    description: "Marketing Manager",
+    image: "/images/sheela.png",
+    color: "bg-pink-500",
+  },
+  ritvik: {
+    name: "Ritvik",
+    description: "Senior Software Engineer",
+    image: "/images/ritvik.png",
+    color: "bg-blue-500",
+  },
+  gaurav: {
+    name: "Gaurav",
+    description: "Founder & CEO",
+    image: "/images/gourav.png",
+    color: "bg-purple-500",
+  },
+};
 
 export default function Home() {
- 
+  const router = useRouter();
+
+  const handlePersonaSelect = (persona: Persona) => {
+    router.push(`/chat?persona=${persona}`);
+  };
 
   return (
     <div className="w-full min-h-screen text-[#527575] relative bg-[#F7F5F3] overflow-x-hidden flex flex-col justify-start items-center">
-    
-
       <div className="relative flex flex-col justify-start items-center w-full">
         {/* Main container with proper margins */}
         <div className="w-full max-w-none px-4 sm:px-6 md:px-8 lg:px-0 lg:max-w-[1060px] lg:w-[1060px] relative flex flex-col justify-start items-start min-h-screen">
@@ -40,20 +66,19 @@ export default function Home() {
                       </div>
                     </div>
                     <div className="flex justify-start items-center">
-                        <div className="flex flex-col justify-center text-[#527575]/80 text-xs md:text-[13px] font-medium leading-[14px] font-sans">
+                      <div className="flex flex-col justify-center text-[#527575]/80 text-xs md:text-[13px] font-medium leading-[14px] font-sans">
                         About
                       </div>
                     </div>
                   </div>
                 </div>
                 <div className="h-6 sm:h-7 md:h-8 flex justify-start items-start gap-2 sm:gap-3 relative z-50 pointer-events-auto">
-                  <Button
-                  
-                    className={`px-2 sm:px-3 md:px-[14px] py-1 sm:py-[6px] overflow-hidden rounded-full flex justify-center items-center cursor-pointer shadow-[0px_1px_2px_rgba(55,50,47,0.12)] transition-colors relative z-[140] pointer-events-auto `}
-          
+                  <Link
+                    href="/chat"
+                    className={cn(buttonVariants({ variant: "outline" }))}
                   >
-                    Log in
-                  </Button>
+                    Chat
+                  </Link>
                 </div>
               </div>
             </div>
@@ -68,32 +93,107 @@ export default function Home() {
                     For Life.
                   </div>
                   <div className="w-full max-w-[506.08px] lg:w-[506.08px] text-center flex justify-center flex-col sm:text-lg md:text-2xl leading-[1.4] sm:leading-[1.45] md:leading-normal lg:leading-7 font-sans px-2 sm:px-4 md:px-0 lg:text-lg font-medium text-sm text-[#527575]">
-                  <TypewriterText
-                      texts={[
-                        "Personalized wellness",
-                        "Memory intelligence",
-                      ]}
+                    <TypewriterText
+                      texts={["Personalized wellness", "Memory intelligence"]}
                       speed={80}
                       pauseTime={3000}
                     />
                   </div>
 
-                  <Link href="/chat">
-                    <Button>
-                      Let's Start
-                    </Button>
-                  </Link>
                   <div className="w-full max-w-[506.08px] lg:w-[506.08px] text-center flex justify-center flex-col text-[#527575]/80 sm:text-lg md:text-xl leading-[1.4] sm:leading-[1.45] md:leading-normal lg:leading-7 font-sans px-2 sm:px-4 md:px-0 lg:text-[1.3rem] sm:text-[1.3em] font-medium text-[1.3em]">
-                    An intentionally mindful wellness approach thoughtfully crafted for contemporary, fast-paced lives and for achieving improved, prolonged healthspan.
+                    An intentionally mindful wellness approach thoughtfully
+                    crafted for contemporary, fast-paced lives and for achieving
+                    improved, prolonged healthspan.
                     <br className="hidden sm:block" />
-                    Welcome to SAMA – the destination where equilibrium, serenity, and empowered strength beautifully unite and flourish together.
+                    Welcome to SAMA – the destination where equilibrium,
+                    serenity, and empowered strength beautifully unite and
+                    flourish together.
                   </div>
                 </div>
               </div>
 
-             {/* <Chatbot /> */}
+              {/* Persona Selection Section */}
+              <div className="w-full flex flex-col items-center gap-6 py-12">
+                <div className="text-center space-y-2">
+                  <h2 className="text-2xl md:text-3xl font-semibold text-[#527575]">
+                    Who are you scheduling for today?
+                  </h2>
+                  <p className="text-sm md:text-base text-[#527575]/70">
+                    Select a persona to get personalized recommendations
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-6 justify-center items-center w-full px-4">
+                  {(["sheila", "ritvik", "gaurav"] as Persona[]).map(
+                    (persona) => (
+                      <button
+                        key={persona}
+                        onClick={() => handlePersonaSelect(persona)}
+                        className="flex cursor-pointer flex-col items-center gap-4 p-6 rounded-2xl border-2 border-[rgba(55,50,47,0.12)] hover:border-[#527575] hover:bg-white/50 transition-all duration-200 w-full sm:w-56 group shadow-sm hover:shadow-md"
+                      >
+                        <Avatar className="h-24 w-24 ring-4 ring-background group-hover:ring-[#527575]/20 transition-all">
+                          <AvatarImage
+                            src={personaData[persona].image}
+                            alt={personaData[persona].name}
+                            className="object-cover"
+                          />
+                          <AvatarFallback
+                            className={cn(
+                              personaData[persona].color,
+                              "text-white text-2xl"
+                            )}
+                          >
+                            {personaData[persona].name[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="text-center space-y-1">
+                          <h3 className="text-lg font-semibold text-[#527575]">
+                            {personaData[persona].name}
+                          </h3>
+                          <p className="text-sm text-[#527575]/70">
+                            {personaData[persona].description}
+                          </p>
+                        </div>
+                      </button>
+                    )
+                  )}
+                </div>
+              </div>
             </div>
           </div>
+
+          {/* Footer */}
+          <footer className="w-full border-t border-[rgba(55,50,47,0.06)] bg-[#F7F5F3] py-8 mt-auto relative z-10">
+            <div className="max-w-[1060px] mx-auto px-4 sm:px-6 md:px-8 lg:px-0">
+              <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div className="text-center md:text-left">
+                  <p className="text-sm text-[#527575]/80">
+                    © 2025 SAMA. All rights reserved.
+                  </p>
+                </div>
+                <div className="flex gap-6 text-sm text-[#527575]/80">
+                  <Link
+                    href="#"
+                    className="hover:text-[#527575] transition-colors"
+                  >
+                    Privacy Policy
+                  </Link>
+                  <Link
+                    href="#"
+                    className="hover:text-[#527575] transition-colors"
+                  >
+                    Terms of Service
+                  </Link>
+                  <Link
+                    href="#"
+                    className="hover:text-[#527575] transition-colors"
+                  >
+                    Contact
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </footer>
         </div>
       </div>
     </div>

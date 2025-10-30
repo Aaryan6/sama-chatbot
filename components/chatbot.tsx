@@ -42,6 +42,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { BookClassDisplay } from "@/components/ai-elements/book-class";
 import { Badge } from "./ui/badge";
+import { useRouter } from "next/navigation";
 
 type Persona = "sheila" | "ritvik" | "gaurav";
 
@@ -73,10 +74,13 @@ const suggestions = [
   "Get personalized wellness advice",
 ];
 
-export default function Chatbot() {
-  const [selectedPersona, setSelectedPersona] = useState<Persona | null>(
-    null
-  );
+interface ChatbotProps {
+  preSelectedPersona?: Persona | null;
+}
+
+export default function Chatbot({ preSelectedPersona }: ChatbotProps) {
+  const router = useRouter();
+  const [selectedPersona, setSelectedPersona] = useState<Persona | null>(preSelectedPersona || null);
   const [input, setInput] = useState("");
 
   const personaNames = {
@@ -94,6 +98,8 @@ export default function Chatbot() {
   const selectPersona = (persona: Persona) => {
     setSelectedPersona(persona);
     setMessages([]);
+    // Update URL search params
+    router.push(`/chat?persona=${persona}`);
   };
 
   const handleSuggestionClick = (suggestion: string) => {
@@ -109,10 +115,8 @@ export default function Chatbot() {
     }
   };
 
-  console.log({ messages });
-
   return (
-    <div className="w-full mx-auto max-w-4xl h-full rounded-2xl overflow-hidden flex flex-col bg-background">
+    <div className="w-full mx-auto shadow-sm max-w-4xl h-full rounded-2xl overflow-hidden flex flex-col bg-background">
       {/* Header with Persona Selection */}
       {!selectedPersona ? (
         <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-8">
@@ -136,7 +140,7 @@ export default function Chatbot() {
               <button
                 key={persona}
                 onClick={() => selectPersona(persona)}
-                className="flex flex-col items-center gap-4 p-6 rounded-2xl border-2 border-border hover:border-primary hover:bg-accent/50 transition-all duration-200 w-56 group"
+                className="flex cursor-pointer flex-col items-center gap-4 p-6 rounded-2xl border-2 border-border hover:border-primary hover:bg-accent/50 transition-all duration-200 w-56 group"
               >
                 <Avatar className="h-24 w-24 ring-4 ring-background group-hover:ring-primary/20 transition-all">
                   <AvatarImage
