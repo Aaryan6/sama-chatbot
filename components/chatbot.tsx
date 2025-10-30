@@ -1,29 +1,26 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport, UIMessage } from "ai";
+import { DefaultChatTransport } from "ai";
 import { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   PromptInput,
   PromptInputTextarea,
   PromptInputActions,
   PromptInputAction,
 } from "@/components/ui/prompt-input";
-import { Send } from "lucide-react";
+import {
+  Send,
+  ThumbsUp,
+  ThumbsDown,
+  Copy,
+  ChevronDown,
+  Check,
+} from "lucide-react";
 import {
   Conversation,
   ConversationContent,
-  ConversationEmptyState,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
 import {
@@ -32,11 +29,65 @@ import {
   MessageAvatar,
 } from "@/components/ai-elements/message";
 import { Response } from "@/components/ai-elements/response";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 type Persona = "sheila" | "ritvik" | "gaurav";
 
+const personaData = {
+  sheila: {
+    name: "Sheila",
+    description: "Marketing Manager, 24 weeks pregnant",
+    image: "/images/sheela.png",
+    color: "bg-pink-500",
+  },
+  ritvik: {
+    name: "Ritvik",
+    description: "Senior Software Engineer",
+    image: "/images/ritvik.png",
+    color: "bg-blue-500",
+  },
+  gaurav: {
+    name: "Gaurav",
+    description: "Founder & CEO",
+    image: "/images/gourav.png",
+    color: "bg-purple-500",
+  },
+};
+
+const suggestionCards = [
+  {
+    icon: "🍽️",
+    title: "Quick Class Recommendations",
+    description: "Find classes that fit your schedule today",
+  },
+  {
+    icon: "🧘",
+    title: "Browse Class Types",
+    description: "Explore yoga, pilates, and meditation options",
+  },
+  {
+    icon: "📅",
+    title: "Check Weekly Schedule",
+    description: "View all available classes this week",
+  },
+  {
+    icon: "✨",
+    title: "Wellness Tips",
+    description: "Get personalized wellness advice",
+  },
+];
+
 export default function Chatbot() {
-  const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
+  const [selectedPersona, setSelectedPersona] = useState<Persona | null>(
+    "sheila"
+  );
   const [input, setInput] = useState("");
 
   const personaNames = {
@@ -45,37 +96,24 @@ export default function Chatbot() {
     gaurav: "Gaurav",
   };
 
-  const { messages, sendMessage, status } = useChat({
+  const { messages, sendMessage, status, setMessages } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chat",
     }),
-    messages: [
-      {
-        id: "1",
-        role: "assistant",
-        parts: [
-          {
-            type: "text",
-            text: selectedPersona
-              ? `Hello! I'm your SAMA Studio assistant for ${personaNames[selectedPersona]}. I have access to your schedule, preferences, and our class timetable. How can I help you find the perfect class?`
-              : "Hello! I'm your SAMA Studio assistant. I have access to your schedule, preferences, and our class timetable. How can I help you find the perfect class?",
-          },
-        ],
-      },
-    ],
   });
 
   const selectPersona = (persona: Persona) => {
     setSelectedPersona(persona);
+    setMessages([]);
   };
 
-  const personaColors = {
-    sheila: "bg-pink-500",
-    ritvik: "bg-blue-500",
-    gaurav: "bg-purple-500",
+  const handleSuggestionClick = (suggestion: string) => {
+    if (selectedPersona) {
+      setInput(suggestion);
+    }
   };
 
-  const getMessageText = (message: UIMessage) => {
+  const getMessageText = (message: (typeof messages)[0]) => {
     return message.parts
       .filter((part) => part.type === "text")
       .map((part) => (part.type === "text" ? part.text : ""))
@@ -83,183 +121,264 @@ export default function Chatbot() {
   };
 
   return (
-    <Card className="w-full max-w-4xl h-[90vh] max-h-[800px] flex flex-col">
-      <CardHeader className="border-b">
-        <CardTitle className="text-2xl">SAMA Studio Assistant</CardTitle>
-        <CardDescription>
-          Your personal wellness scheduling companion
-        </CardDescription>
+    <div className="w-full mx-auto max-w-4xl h-full rounded-2xl overflow-hidden flex flex-col bg-background">
+      {/* Header with Persona Selection */}
+      {!selectedPersona ? (
+        <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-8">
+          <div className="flex flex-col items-center space-y-4">
+            <Avatar>
+              <AvatarImage src="/images/yoga.jpg" alt="SAMA" />
+              <AvatarFallback>S</AvatarFallback>
+            </Avatar>
+            <div className="text-center space-y-2">
+              <h1 className="text-4xl font-semibold text-foreground">
+                Hi there,
+              </h1>
+              <p className="text-xl text-muted-foreground">
+                Who are you scheduling for today?
+              </p>
+            </div>
+          </div>
 
-        <div className="flex gap-2 justify-center flex-wrap pt-4">
-          {(["sheila", "ritvik", "gaurav"] as Persona[]).map((persona) => (
-            <Button
-              key={persona}
-              onClick={() => selectPersona(persona)}
-              variant={selectedPersona === persona ? "default" : "outline"}
-              size="sm"
-            >
-              {personaNames[persona]}
-            </Button>
-          ))}
+          <div className="flex gap-3">
+            {(["sheila", "ritvik", "gaurav"] as Persona[]).map((persona) => (
+              <Button
+                key={persona}
+                onClick={() => selectPersona(persona)}
+                variant="outline"
+                size="lg"
+                className="text-base"
+              >
+                {personaNames[persona]}
+              </Button>
+            ))}
+          </div>
         </div>
-      </CardHeader>
+      ) : (
+        <>
+          {/* Header with Persona Switcher */}
+          <div className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-10">
+            <div className="flex items-center justify-between px-4 py-3 max-w-3xl mx-auto">
+              <div className="flex items-center gap-3">
+                <Avatar>
+                  <AvatarImage
+                    src="/images/yoga.jpg"
+                    alt="SAMA"
+                    className="bg-muted border-2 object-cover rounded-full"
+                  />
+                  <AvatarFallback>S</AvatarFallback>
+                </Avatar>
+                <div>
+                  <h3 className="text-sm font-semibold">
+                    SAMA Studio Assistant
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Wellness scheduling companion
+                  </p>
+                </div>
+              </div>
 
-      <CardContent className="flex-1 overflow-hidden p-0">
-        <Conversation className="h-full">
-          <ConversationContent>
-            {messages.length === 0 && !selectedPersona && (
-              <ConversationEmptyState
-                title="Welcome to SAMA Studio"
-                description="Select a persona above to start scheduling your wellness classes. I'll help you find the perfect class times based on your schedule and preferences."
-                icon={<span className="text-4xl">🧘</span>}
-              />
-            )}
-            {/* 
-            {messages.length === 0 && selectedPersona && (
-              <Message from="assistant">
-                <MessageAvatar
-                  src="/assistant-avatar.png"
-                  name="SAMA"
-                  className="bg-primary text-primary-foreground"
-                />
-                <MessageContent variant="flat">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-semibold">
-                      SAMA Assistant
+              {/* Persona Popover */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-2 h-9"
+                  >
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage
+                        src={personaData[selectedPersona].image}
+                        alt={personaData[selectedPersona].name}
+                      />
+                      <AvatarFallback
+                        className={cn(
+                          personaData[selectedPersona].color,
+                          "text-white text-xs"
+                        )}
+                      >
+                        {personaData[selectedPersona].name[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-medium">
+                      {personaData[selectedPersona].name}
                     </span>
-                    <Badge variant="secondary" className="text-xs h-4 px-1.5">
-                      AI
-                    </Badge>
-                  </div>
-                  <Response>
-                    Hello! I&apos;m your SAMA Studio assistant for{" "}
-                    {personaNames[selectedPersona]}. I have access to your
-                    schedule, preferences, and our class timetable. How can I
-                    help you find the perfect class?
-                  </Response>
-                </MessageContent>
-              </Message>
-            )} */}
-
-            {messages.map((message: UIMessage) => (
-              <Message key={message.id} from={message.role}>
-                {/* <MessageAvatar
-                  src={
-                    message.role === "user"
-                      ? "/user-avatar.png"
-                      : "/assistant-avatar.png"
-                  }
-                  name={
-                    message.role === "user"
-                      ? selectedPersona
-                        ? personaNames[selectedPersona]
-                        : "You"
-                      : "SAMA"
-                  }
-                  className={
-                    message.role === "user" && selectedPersona
-                      ? `${personaColors[selectedPersona]} text-white`
-                      : "bg-primary text-primary-foreground"
-                  }
-                /> */}
-                <MessageContent
-                  variant={message.role === "user" ? "contained" : "flat"}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-semibold">
-                      {message.role === "user"
-                        ? selectedPersona
-                          ? personaNames[selectedPersona]
-                          : "You"
-                        : "SAMA Assistant"}
-                    </span>
-                    {message.role === "assistant" && (
-                      <Badge variant="secondary" className="text-xs h-4 px-1.5">
-                        AI
-                      </Badge>
+                    <ChevronDown className="h-4 w-4 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-2" align="end">
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium text-muted-foreground px-2 py-1.5">
+                      Select Persona
+                    </p>
+                    {(["sheila", "ritvik", "gaurav"] as Persona[]).map(
+                      (persona) => (
+                        <button
+                          key={persona}
+                          onClick={() => setSelectedPersona(persona)}
+                          className={cn(
+                            "flex items-center gap-3 w-full p-3 rounded-lg hover:bg-accent transition-colors",
+                            selectedPersona === persona && "bg-accent"
+                          )}
+                        >
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage
+                              src={personaData[persona].image}
+                              alt={personaData[persona].name}
+                            />
+                            <AvatarFallback
+                              className={cn(
+                                personaData[persona].color,
+                                "text-white"
+                              )}
+                            >
+                              {personaData[persona].name[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 text-left">
+                            <p className="text-sm font-medium">
+                              {personaData[persona].name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {personaData[persona].description}
+                            </p>
+                          </div>
+                          {selectedPersona === persona && (
+                            <Check className="h-4 w-4 text-primary" />
+                          )}
+                        </button>
+                      )
                     )}
                   </div>
-                  <Response>{getMessageText(message)}</Response>
-                </MessageContent>
-              </Message>
-            ))}
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
 
-            {(status === "submitted" ||
-              (status === "streaming" &&
-                messages.length > 0 &&
-                messages[messages.length - 1].role === "assistant" &&
-                !messages[messages.length - 1].parts.some(
-                  (p) => p.type === "text" && p.text.trim().length > 0
-                ))) && (
-              <Message from="assistant">
-                <MessageAvatar
-                  src="/assistant-avatar.png"
-                  name="SAMA"
-                  className="bg-primary text-primary-foreground"
-                />
-                <MessageContent variant="flat">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-semibold">
-                      SAMA Assistant
-                    </span>
-                    <Badge variant="secondary" className="text-xs h-4 px-1.5">
-                      AI
-                    </Badge>
-                  </div>
-                  <div className="flex gap-1">
-                    <span
-                      className="w-2 h-2 rounded-full bg-primary animate-bounce"
-                      style={{ animationDelay: "0ms" }}
-                    ></span>
-                    <span
-                      className="w-2 h-2 rounded-full bg-primary animate-bounce"
-                      style={{ animationDelay: "150ms" }}
-                    ></span>
-                    <span
-                      className="w-2 h-2 rounded-full bg-primary animate-bounce"
-                      style={{ animationDelay: "300ms" }}
-                    ></span>
-                  </div>
-                </MessageContent>
-              </Message>
-            )}
-          </ConversationContent>
-          <ConversationScrollButton />
-        </Conversation>
-      </CardContent>
+          {/* Main Chat Area */}
+          <div className="flex-1 overflow-hidden">
+            <Conversation className="h-full">
+              <ConversationContent className="px-4 py-6 max-w-3xl mx-auto">
+                {/* Welcome Message */}
+                {messages.length === 0 && selectedPersona && (
+                  <div className="flex flex-col items-center space-y-8 py-12">
+                    <div className="flex flex-col items-start space-y-3 w-full max-w-2xl">
+                      <div className="bg-linear-to-r from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 rounded-2xl px-6 py-4 inline-flex items-center gap-2">
+                        <h2 className="text-2xl font-semibold text-foreground">
+                          Welcome, {personaNames[selectedPersona]}!
+                        </h2>
+                        <span className="text-2xl">👋</span>
+                      </div>
+                      <p className="text-xl text-muted-foreground px-2">
+                        How can I help you today?
+                      </p>
+                    </div>
 
-      <CardFooter className="border-t p-4">
-        <PromptInput
-          value={input}
-          onValueChange={setInput}
-          isLoading={status !== "ready"}
-          onSubmit={() => {
-            if (input.trim() && selectedPersona) {
-              sendMessage(
-                { text: input },
-                {
-                  body: {
-                    persona: selectedPersona,
-                  },
-                }
-              );
-              setInput("");
-            }
-          }}
-          className="w-full"
-        >
-          <PromptInputTextarea
-            placeholder={
-              selectedPersona
-                ? "Ask about class scheduling..."
-                : "Select a persona first..."
-            }
-            disabled={!selectedPersona || status !== "ready"}
-          />
-          <PromptInputActions>
-            <PromptInputAction tooltip="Send message (Enter)">
-              <Button
-                onClick={() => {
+                    {/* Suggestion Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl">
+                      {suggestionCards.map((card, index) => (
+                        <button
+                          key={index}
+                          onClick={() =>
+                            handleSuggestionClick(card.description)
+                          }
+                          className="group relative p-4 rounded-2xl border border-border bg-card hover:bg-accent hover:border-accent-foreground/20 transition-all duration-200 text-left"
+                        >
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-2xl">{card.icon}</span>
+                            </div>
+                            <div className="space-y-1">
+                              <p className="font-medium text-sm text-foreground">
+                                {card.title}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {card.description}
+                              </p>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Messages */}
+                {messages.map((message) => (
+                  <div key={message.id} className="mb-6">
+                    <Message from={message.role}>
+                      <MessageContent
+                        className={cn(
+                          "max-w-[80%] shadow-md",
+                          message.role === "user" ? "ml-auto" : ""
+                        )}
+                      >
+                        <Response>{getMessageText(message)}</Response>
+                      </MessageContent>
+                      {message.role === "assistant" && (
+                        <MessageAvatar
+                          src="/images/yoga.jpg"
+                          name="SAMA"
+                          className="bg-muted border-2 object-cover rounded-full"
+                        />
+                      )}
+                      {message.role === "user" && (
+                        <MessageAvatar
+                          src="/images/sheela.png"
+                          name="SAMA"
+                          className="bg-muted border-2 object-cover rounded-full"
+                        />
+                      )}
+                    </Message>
+                  </div>
+                ))}
+
+                {/* Loading State */}
+                {(status === "submitted" ||
+                  (status === "streaming" &&
+                    messages.length > 0 &&
+                    messages[messages.length - 1].role === "assistant" &&
+                    !messages[messages.length - 1].parts.some(
+                      (p) => p.type === "text" && p.text.trim().length > 0
+                    ))) && (
+                  <div className="mb-6">
+                    <Message from="assistant">
+                      <MessageContent variant="flat">
+                        <div className="flex gap-1.5 p-3">
+                          <span
+                            className="w-2 h-2 rounded-full bg-muted-foreground/60 animate-bounce"
+                            style={{ animationDelay: "0ms" }}
+                          ></span>
+                          <span
+                            className="w-2 h-2 rounded-full bg-muted-foreground/60 animate-bounce"
+                            style={{ animationDelay: "150ms" }}
+                          ></span>
+                          <span
+                            className="w-2 h-2 rounded-full bg-muted-foreground/60 animate-bounce"
+                            style={{ animationDelay: "300ms" }}
+                          ></span>
+                        </div>
+                      </MessageContent>
+                      <MessageAvatar
+                        src="/images/yoga.jpg"
+                        name="SAMA"
+                        className="bg-muted border-2 object-cover rounded-full"
+                      />
+                    </Message>
+                  </div>
+                )}
+              </ConversationContent>
+              <ConversationScrollButton />
+            </Conversation>
+          </div>
+
+          {/* Input Area */}
+          <div className="border-t bg-background px-4 py-4">
+            <div className="max-w-3xl mx-auto">
+              <PromptInput
+                value={input}
+                onValueChange={setInput}
+                isLoading={status !== "ready"}
+                onSubmit={() => {
                   if (input.trim() && selectedPersona) {
                     sendMessage(
                       { text: input },
@@ -272,18 +391,47 @@ export default function Chatbot() {
                     setInput("");
                   }
                 }}
-                disabled={
-                  !selectedPersona || status !== "ready" || !input.trim()
-                }
-                size="icon"
-                className="size-8"
+                className="w-full shadow-lg"
               >
-                <Send className="h-4 w-4" />
-              </Button>
-            </PromptInputAction>
-          </PromptInputActions>
-        </PromptInput>
-      </CardFooter>
-    </Card>
+                <PromptInputTextarea
+                  placeholder="Write your prompt..."
+                  disabled={!selectedPersona || status !== "ready"}
+                  className="min-h-[52px]"
+                />
+                <PromptInputActions className="">
+                  <PromptInputAction
+                    side="right"
+                    tooltip="Send message (Enter)"
+                  >
+                    <Button
+                      onClick={() => {
+                        if (input.trim() && selectedPersona) {
+                          sendMessage(
+                            { text: input },
+                            {
+                              body: {
+                                persona: selectedPersona,
+                              },
+                            }
+                          );
+                          setInput("");
+                        }
+                      }}
+                      disabled={
+                        !selectedPersona || status !== "ready" || !input.trim()
+                      }
+                      size="icon"
+                      className="size-9 rounded-full"
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </PromptInputAction>
+                </PromptInputActions>
+              </PromptInput>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
