@@ -65,36 +65,40 @@ export function AskForConfirmationDisplay({
                   setSelected((prev) => ({ ...prev, [idx]: !prev[idx] }))
                 }
                 className={cn(
-                  "w-full text-left rounded-xl border-2 p-3 transition-all",
+                  // More compact for mobile devices
+                  "w-full text-left rounded-xl border-2 transition-all",
+                  "p-3 sm:p-3 px-2 py-2", // same padding on sm+, tighter px-py on mobile
                   checked
                     ? "border-primary/60 bg-accent/50"
                     : "border-border hover:border-primary/40"
                 )}
               >
-                <div className="flex items-start gap-3">
+                <div className="flex items-start sm:gap-3 gap-2">
                   <div
                     className={cn(
-                      "mt-1 h-5 w-5 rounded-md border-2 flex items-center justify-center",
+                      // shrink for mobile
+                      "mt-1 rounded-md border-2 flex items-center justify-center",
+                      " sm:h-5 sm:w-5 h-4 w-4",
                       checked
                         ? "border-primary bg-primary text-white"
                         : "border-muted-foreground/30"
                     )}
                   >
-                    {checked && <Check className="h-3.5 w-3.5" />}
+                    {checked && <Check className=" sm:h-3.5 sm:w-3.5 h-3 w-3" />}
                   </div>
-                  <div className="flex-1">
-                    <div className="font-semibold text-foreground">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-foreground text-base sm:text-base truncate">
                       {c.name}
                     </div>
-                    <div className="mt-1 text-sm text-muted-foreground flex flex-wrap gap-4">
-                      <span className="inline-flex items-center gap-1">
-                        <Calendar className="h-4 w-4" /> {c.day}
+                    <div className="mt-1 text-sm text-muted-foreground flex flex-wrap sm:gap-4 gap-2">
+                      <span className="inline-flex items-center gap-1 text-xs sm:text-sm">
+                        <Calendar className=" sm:h-4 sm:w-4 h-3.5 w-3.5" /> {c.day}
                       </span>
-                      <span className="inline-flex items-center gap-1">
-                        <Clock className="h-4 w-4" /> {c.time}
+                      <span className="inline-flex items-center gap-1 text-xs sm:text-sm">
+                        <Clock className=" sm:h-4 sm:w-4 h-3.5 w-3.5" /> {c.time}
                       </span>
-                      <span className="inline-flex items-center gap-1">
-                        <User className="h-4 w-4" /> {c.instructor}
+                      <span className="inline-flex items-center gap-1 text-xs sm:text-sm">
+                        <User className=" sm:h-4 sm:w-4 h-3.5 w-3.5" /> {c.instructor}
                       </span>
                     </div>
                   </div>
@@ -104,7 +108,7 @@ export function AskForConfirmationDisplay({
           })}
 
           <Button
-            className="mt-1"
+            className="mt-1 w-full sm:w-auto mx-auto text-xs sm:text-base"
             disabled={numSelected === 0}
             onClick={() => {
               const chosen = classes.filter((_, i) => selected[i]);

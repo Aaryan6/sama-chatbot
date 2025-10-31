@@ -78,7 +78,7 @@ export default function TypewriterText({
   };
 
   return (
-    <div className={`flex items-center justify-center text-3xl gap-2 text-[#527575] ${className}`}>
+    <div className={`flex items-center justify-center text-lg  md:text-3xl gap-2 text-[#527575] ${className}`}>
       {getCurrentIcon()}
       <span>{currentText}</span>
       <span className="animate-pulse">|</span>

@@ -166,8 +166,8 @@ export default function Chatbot({ preSelectedPersona }: ChatbotProps) {
         <>
           {/* Header with Persona Switcher */}
           <div className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-10">
-            <div className="flex items-center justify-between px-4 py-3 max-w-3xl mx-auto">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between px-3 py-2 sm:px-4 sm:py-3 max-w-3xl mx-auto">
+              <div className="flex items-center gap-2 sm:gap-3">
                 {/* Back Button */}
                 <Button
                   variant="ghost"
@@ -178,7 +178,7 @@ export default function Chatbot({ preSelectedPersona }: ChatbotProps) {
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
 
-                <Avatar>
+                <Avatar className="h-8 w-8 sm:h-9 sm:w-9">
                   <AvatarImage
                     src="/images/yoga.jpg"
                     alt="SAMA"
@@ -186,7 +186,7 @@ export default function Chatbot({ preSelectedPersona }: ChatbotProps) {
                   />
                   <AvatarFallback>S</AvatarFallback>
                 </Avatar>
-                <div>
+                <div className="hidden sm:block">
                   <h3 className="text-sm font-semibold">
                     SAMA Studio Assistant
                   </h3>
@@ -197,15 +197,20 @@ export default function Chatbot({ preSelectedPersona }: ChatbotProps) {
               </div>
 
               {/* Persona Tabs */}
-              <Tabs
-                value={selectedPersona}
-                onValueChange={(value) => selectPersona(value as Persona)}
-              >
-                <TabsList>
+              <div className="ml-2 sm:ml-0 overflow-x-auto max-w-full">
+                <Tabs
+                  value={selectedPersona}
+                  onValueChange={(value) => selectPersona(value as Persona)}
+                >
+                  <TabsList className="flex-nowrap gap-1 sm:gap-2 w-max">
                   {(["sheila", "ritvik", "gaurav"] as Persona[]).map(
                     (persona) => (
-                      <TabsTrigger key={persona} value={persona}>
-                        <Avatar className="h-5 w-5 mr-1.5">
+                      <TabsTrigger
+                        key={persona}
+                        value={persona}
+                        className="px-2 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm"
+                      >
+                        <Avatar className="h-5 w-5 mr-1">
                           <AvatarImage
                             src={personaData[persona].image}
                             alt={personaData[persona].name}
@@ -223,8 +228,9 @@ export default function Chatbot({ preSelectedPersona }: ChatbotProps) {
                       </TabsTrigger>
                     )
                   )}
-                </TabsList>
-              </Tabs>
+                  </TabsList>
+                </Tabs>
+              </div>
             </div>
           </div>
 
@@ -260,9 +266,19 @@ export default function Chatbot({ preSelectedPersona }: ChatbotProps) {
                         )}
                       >
                         {/* Render tool calls */}
-                        {message.parts.map((part, index) => {
+                        {(() => {
+                          const firstClassOptionsIndex = message.parts.findIndex(
+                            (p) => p.type === "tool-showClassOptions"
+                          );
+                          return message.parts.map((part, index) => {
                           const { type } = part;
                           if (type === "text") {
+                            if (
+                              firstClassOptionsIndex !== -1 &&
+                              index > firstClassOptionsIndex
+                            ) {
+                              return null;
+                            }
                             return <Response key={index}>{part.text}</Response>;
                           }
                           if (type === "tool-showClassOptions") {
@@ -441,7 +457,8 @@ export default function Chatbot({ preSelectedPersona }: ChatbotProps) {
                             }
                           }
                           return null;
-                        })}
+                        });
+                        })()}
 
                         {/* Show loading indicator inside the message if streaming, has tool calls, but no text yet */}
                         {message.role === "assistant" &&
