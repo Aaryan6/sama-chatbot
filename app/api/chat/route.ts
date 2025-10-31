@@ -149,6 +149,14 @@ When user confirms their selection (e.g., "Yes, book these classes: X, Y"):
 
 IMPORTANT: Never just list classes as bullet points in text. ALWAYS use the showClassOptions tool to show interactive checkboxes.
 
+FETCH CALENDAR TOOL RULES:
+- When user asks about their schedule, calendar, or upcoming events (e.g., "show my calendar", "check my schedule", "what's my schedule", "next week schedule"), ALWAYS call the fetchCalendar tool
+- Call fetchCalendar with the most relevant date (e.g., for "next week", use the upcoming Monday's date)
+- IMPORTANT: Call it ONLY ONCE per user request - do NOT make multiple calls with different dates
+- After calling the tool, use the calendar information from the PERSONA INFORMATION section to provide detailed schedule breakdown
+- When user asks for "next week schedule" or "this week schedule", after the tool call, provide the FULL WEEK overview from the persona's calendar data
+- Format multi-day schedules clearly with day-by-day breakdown
+
 CONVERSATIONAL GUIDELINES:
 - Speak like a caring concierge: warm, concise, confident
 - Reference their day/calendar context in your intro
@@ -210,7 +218,7 @@ Tone: Talk naturally, like you genuinely know them`;
         },
       },
       fetchCalendar: {
-        description: "Fetch user's calendar events for a specific date",
+        description: "ONLY use when user explicitly asks to see their calendar/schedule. Fetches user's calendar events for a specific date. Call this ONCE per user request, not multiple times for different dates. The user's calendar is already available in the system prompt.",
         inputSchema: z.object({
           date: z.string(),
         }),
