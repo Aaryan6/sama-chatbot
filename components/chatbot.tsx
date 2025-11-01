@@ -60,7 +60,7 @@ const personaData = {
 const suggestions = [
   "I want to add class on wednesday",
   "Find classes that fit my schedule",
-  "View all available classes this week",
+  "Check my next week classes",
 ];
 
 interface ChatbotProps {
@@ -297,20 +297,28 @@ export default function Chatbot({ preSelectedPersona }: ChatbotProps) {
                           }
                           return null;
                         })}
-                        {message.parts.map((part, index) => {
-                          if (part.type !== "text") return null;
+                        {/* Combine all text parts into a single message card */}
+                        {(() => {
+                          const textParts = message.parts.filter(
+                            (p) => p.type === "text"
+                          );
+                          if (textParts.length === 0) return null;
+
+                          const combinedText = textParts
+                            .map((p) => p.text)
+                            .join("\n\n");
+
                           return (
                             <MessageContent
-                              key={index}
                               className={cn(
                                 "max-w-[80%] shadow-md",
                                 message.role === "user" ? "ml-auto" : ""
                               )}
                             >
-                              <Response>{part.text}</Response>
+                              <Response>{combinedText}</Response>
                             </MessageContent>
                           );
-                        })}
+                        })()}
                         {/* Show loading indicator if streaming with no content */}
                         {message.role === "assistant" &&
                           status === "streaming" &&
@@ -321,8 +329,8 @@ export default function Chatbot({ preSelectedPersona }: ChatbotProps) {
                           message.parts.some((p) =>
                             p.type.startsWith("tool-")
                           ) && (
-                            <MessageContent className="max-w-[80%] w-fit shadow-md">
-                              <span>Thinking...</span>
+                            <MessageContent className="w-fit shadow-md">
+                              <Response>Thinking...</Response>
                             </MessageContent>
                           )}
                         {/* Render tools with text that comes after them */}
@@ -452,11 +460,21 @@ export default function Chatbot({ preSelectedPersona }: ChatbotProps) {
                         </div>
                       </div>
                       {message.role === "assistant" && (
-                        <MessageAvatar
-                          src="/images/yoga.jpg"
-                          name="SAMA"
-                          className="bg-muted border-2 object-cover rounded-full mt-2"
-                        />
+                        <div className="relative mt-2">
+                          {/* Spinning border when streaming - only show if text is streaming, not just tool calls */}
+                          {status === "streaming" &&
+                            messageIndex === messages.length - 1 &&
+                            message.parts.some((p) => p.type === "text" && p.text.trim().length > 0) && (
+                              <div className="absolute -inset-1 rounded-full animate-spin">
+                                <div className="h-full w-full rounded-full border-2 border-transparent border-t-blue-500 border-r-blue-500"></div>
+                              </div>
+                            )}
+                          <MessageAvatar
+                            src="/images/yoga.jpg"
+                            name="SAMA"
+                            className="bg-muted border-2 object-cover rounded-full relative z-10"
+                          />
+                        </div>
                       )}
                       {message.role === "user" && selectedPersona && (
                         <MessageAvatar
@@ -479,14 +497,20 @@ export default function Chatbot({ preSelectedPersona }: ChatbotProps) {
                   !messages[messages.length - 1].parts.some((p) =>
                     p.type.startsWith("tool-")
                   ) && (
-                    <div className="mb-6 w-fit">
+                    <div className="mb-6">
                       <Message from="assistant">
                         <MessageContent>Thinking...</MessageContent>
-                        <MessageAvatar
-                          src="/images/yoga.jpg"
-                          name="SAMA"
-                          className="bg-muted border-2 object-cover rounded-full"
-                        />
+                        <div className="relative mt-2">
+                          {/* Spinning border when streaming */}
+                          <div className="absolute -inset-1 rounded-full animate-spin">
+                            <div className="h-full w-full rounded-full border-2 border-transparent border-t-blue-500 border-r-blue-500"></div>
+                          </div>
+                          <MessageAvatar
+                            src="/images/yoga.jpg"
+                            name="SAMA"
+                            className="bg-muted border-2 object-cover rounded-full relative z-10"
+                          />
+                        </div>
                       </Message>
                     </div>
                   )}
