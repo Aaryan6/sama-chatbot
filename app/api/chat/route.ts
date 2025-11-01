@@ -99,11 +99,11 @@ export async function POST(req: Request) {
   }
 
   // Get current date
-  const currentDate = new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
+  const currentDate = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
 
   const systemPrompt = `You are a premium wellness scheduling assistant for SAMA Studio in Bangalore. You're helping ${
@@ -131,19 +131,17 @@ When to call showClassOptions tool:
 - ANY request that implies they want to book or schedule a class
 
 How to use showClassOptions tool:
-1. First, write a brief 1-2 sentence introduction referencing their calendar
-   - PERSONALIZE: mention usual time patterns, instructor preferences, and any conflicts if relevant.
-   - Examples: "Your usual 6 AM slot is free, but Rohan isn't teaching Wednesday; the 8:30 AM Pilates keeps your cardio streak and ends before prep time."
-2. IMMEDIATELY call the showClassOptions tool and provide an array of 2-3 suitable classes:
+1. First, write ALL your text response (1-3 sentences) that introduces the classes and explains why they work
+2. THEN call the showClassOptions tool at the very end with an array of 2-3 suitable classes:
    - Each class object must have: className, date, time, instructor (optional)
    - Include a PRIMARY option and BACKUP options
    - Only include classes that don't conflict with their calendar
-3. After the tool call, add one compact, personalized sentence explaining why these options fit (timing vs meetings, preferred instructors, health constraints). Keep it to one sentence.
+3. DO NOT write any text after the tool call - the tool call must be the LAST thing you do
 
 Example response structure:
-"Since you're free after your Investor relations meeting Wednesday morning, here are some great options:"
+"Since you're free after your Investor relations meeting Wednesday morning, I've found some great options for you. Both classes work well with your schedule and preferences!"
 [CALL showClassOptions tool with classes array]
-"Both classes work well with your schedule and preferences."
+[STOP - NO MORE TEXT AFTER TOOL CALL]
 
 When user confirms their selection (e.g., "Yes, book these classes: X, Y"):
 - Call confirmBooking tool with the bookedClasses array containing only the classes they selected
@@ -167,10 +165,12 @@ CONVERSATIONAL GUIDELINES:
 - Skip marketing language; be practical and personal
 - For simple informational questions NOT about booking (e.g., "What's yoga?"), answer in 1-2 sentences without tools
 
-PERSONALIZATION CHECKLIST (use when proposing classes):
-- Time fit: call out free windows or protected slots and how options fit around them
-- Preference fit: reference favorite instructors, preferred class types, and avoidances (e.g., prenatal constraints, knee-friendly)
-- Rationale: one short line that compares options (e.g., "earliest start vs. higher intensity"), not a paragraph
+TOOL CALLING RULES - CRITICAL:
+- ALWAYS write your complete text response FIRST, then call the tool LAST
+- NEVER write any text after a tool call - tool calls must be the final action
+- For showClassOptions: Write all explanatory text → Call tool → STOP
+- For confirmBooking: Write success message → Call tool → STOP
+- For fetchCalendar: Call tool → Write explanation using calendar data from system prompt
 
 Tone: Talk naturally, like you genuinely know them`;
 
@@ -225,7 +225,8 @@ Tone: Talk naturally, like you genuinely know them`;
         },
       },
       fetchCalendar: {
-        description: "ONLY use when user explicitly asks to see their calendar/schedule. Fetches user's calendar events for a specific date. Call this ONCE per user request, not multiple times for different dates. The user's calendar is already available in the system prompt.",
+        description:
+          "ONLY use when user explicitly asks to see their calendar/schedule. Fetches user's calendar events for a specific date. Call this ONCE per user request, not multiple times for different dates. The user's calendar is already available in the system prompt.",
         inputSchema: z.object({
           date: z.string(),
         }),

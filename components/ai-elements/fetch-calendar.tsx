@@ -48,10 +48,8 @@ export function FetchCalendarDisplay({ part }: FetchCalendarDisplayProps) {
   return (
     <div
       className={cn(
-        "rounded-xl border-2 p-3 max-w-md transition-all",
-        isCompleted
-          ? "bg-background border-border dark:bg-emerald-950/20 dark:border-emerald-800"
-          : "bg-white border-border dark:bg-blue-950/20 dark:border-blue-800"
+        "rounded-lg border-2 p-2 max-w-md transition-all",
+        isCompleted ? "bg-background border-border" : "bg-white border-border"
       )}
     >
       {/* Collapsible Header - always visible */}
@@ -60,7 +58,7 @@ export function FetchCalendarDisplay({ part }: FetchCalendarDisplayProps) {
         className="w-full flex items-center justify-between gap-2 cursor-pointer"
         onClick={() => setIsOpen((v) => !v)}
       >
-        <span className="font-semibold text-base text-blue-600 flex items-center gap-2">
+        <span className="font-semibold text-sm text-muted-foreground flex items-center gap-2">
           <span className="relative inline-flex items-center justify-center">
             {!isCompleted && (
               <span className="absolute -inset-1 rounded-full border-2 border-blue-400/60 border-t-transparent animate-spin" />
@@ -70,7 +68,7 @@ export function FetchCalendarDisplay({ part }: FetchCalendarDisplayProps) {
               alt={"Google Calendar"}
               width={20}
               height={20}
-              className="size-6"
+              className="size-5"
             />
           </span>
           {isCompleted ? "Google Calendar" : progressSteps[currentStep].text}
@@ -106,7 +104,9 @@ export function FetchCalendarDisplay({ part }: FetchCalendarDisplayProps) {
                 {isCompleted && (
                   <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
                 )}
-                {isCompleted ? "Events fetched" : progressSteps[currentStep].text}
+                {isCompleted
+                  ? "Events fetched"
+                  : progressSteps[currentStep].text}
               </p>
             </div>
           </div>
@@ -125,5 +125,3 @@ export function FetchCalendarDisplay({ part }: FetchCalendarDisplayProps) {
     </div>
   );
 }
-
-

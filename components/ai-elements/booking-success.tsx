@@ -35,7 +35,7 @@ export function BookingSuccessDisplay({ part }: BookingSuccessDisplayProps) {
 
   return (
     <div className="space-y-3">
-      <div className="rounded-xl border-2 bg-background border-border dark:bg-emerald-950/20 dark:border-emerald-800 p-4 space-y-3">
+      <div className="rounded-xl border-2 bg-background border-border dark:bg-emerald-950/20 dark:border-emerald-800 p-3 space-y-3">
         <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-300">
           <CheckCircle2 className="size-5" />
           <h3 className="font-semibold text-base">{message}</h3>
@@ -47,7 +47,7 @@ export function BookingSuccessDisplay({ part }: BookingSuccessDisplayProps) {
           {bookedClasses.map((classItem, index) => (
             <div
               key={index}
-              className="flex items-start gap-3 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800"
+              className="flex items-start gap-3 p-2 rounded-lg bg-emerald-50 border border-emerald-200"
             >
               <CheckCircle2 className="size-5 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
               <div className="flex-1 space-y-1">
