@@ -131,17 +131,23 @@ When to call showClassOptions tool:
 - ANY request that implies they want to book or schedule a class
 
 How to use showClassOptions tool:
-1. First, write ALL your text response (1-3 sentences) that introduces the classes and explains why they work
+1. First, write ALL your text response (1-3 sentences) that explains the context and recommends specific classes
 2. THEN call the showClassOptions tool at the very end with an array of 2-3 suitable classes:
    - Each class object must have: className, date, time, instructor (optional)
    - Include a PRIMARY option and BACKUP options
    - Only include classes that don't conflict with their calendar
 3. DO NOT write any text after the tool call - the tool call must be the LAST thing you do
+4. CRITICAL LANGUAGE RULES - NEVER mention in your text:
+   - "options", "selecting", "select", "choose", "pick"
+   - "let's look at", "I'll show you", "here are some"
+   - "tool", "calling"
+   - ANY phrase that references the UI or selection process
+5. Instead, write as if you're RECOMMENDING the classes directly - be confident and specific
 
-Example response structure:
-"Since you're free after your Investor relations meeting Wednesday morning, I've found some great options for you. Both classes work well with your schedule and preferences!"
-[CALL showClassOptions tool with classes array]
-[STOP - NO MORE TEXT AFTER TOOL CALL]
+Example response:
+TEXT: "Since you're free after your campaign strategy meeting Wednesday morning, a relaxing Prenatal Gentle session with Meera from 9:45 to 10:45 AM would be a soothing way to connect with your body and relax."
+THEN: Call showClassOptions tool (the system will handle showing the UI)
+NO MORE TEXT after tool call!
 
 When user confirms their selection (e.g., "Yes, book these classes: X, Y"):
 - Call confirmBooking tool with the bookedClasses array containing only the classes they selected
@@ -168,7 +174,9 @@ CONVERSATIONAL GUIDELINES:
 TOOL CALLING RULES - CRITICAL:
 - ALWAYS write your complete text response FIRST, then call the tool LAST
 - NEVER write any text after a tool call - tool calls must be the final action
-- For showClassOptions: Write all explanatory text → Call tool → STOP
+- NEVER write the JSON or parameters of the tool in your text response - the system handles tool execution
+- When you need to show classes, write your recommendation text, then CALL the showClassOptions tool (don't describe it)
+- For showClassOptions: Write all explanatory text → Call tool (not as text!) → STOP
 - For confirmBooking: Write success message → Call tool → STOP
 - For fetchCalendar: Call tool → Write explanation using calendar data from system prompt
 
@@ -180,16 +188,16 @@ Tone: Talk naturally, like you genuinely know them`;
     tools: {
       showClassOptions: {
         description:
-          "REQUIRED tool for showing available classes to book/schedule. Use this whenever user wants to add, book, schedule, or attend classes. Shows interactive checkbox UI for class selection. DO NOT list classes as text - ALWAYS use this tool.",
+          "REQUIRED tool for showing available classes to book/schedule. Use this whenever user wants to add, book, schedule, or attend classes. Shows interactive checkbox UI for class selection. CRITICAL: You must CALL this tool, not describe it or write its JSON. DO NOT output the tool parameters as text.",
         inputSchema: z.object({
           classes: z.array(
             z.object({
-              className: z.string(),
-              date: z.string(),
-              time: z.string(),
-              instructor: z.string().optional(),
+              className: z.string().describe("Name of the yoga/pilates class"),
+              date: z.string().describe("Date in format like 'Wed Nov 5, 2025'"),
+              time: z.string().describe("Time range like '9:45-10:45 AM'"),
+              instructor: z.string().optional().describe("Instructor name"),
             })
-          ),
+          ).describe("Array of 2-3 class options that fit the user's schedule"),
         }),
         execute: async ({ classes }) => {
           return {

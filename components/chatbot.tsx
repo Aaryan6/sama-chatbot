@@ -378,9 +378,12 @@ export default function Chatbot({ preSelectedPersona }: ChatbotProps) {
                             if (type === "tool-showClassOptions") {
                               const { state } = part;
                               // Only show when output is available AND not currently streaming
-                              const isLastMessage = messageIndex === messages.length - 1;
+                              const isLastMessage =
+                                messageIndex === messages.length - 1;
                               const isStreaming = status === "streaming";
-                              const shouldShow = state === "output-available" && (!isLastMessage || !isStreaming);
+                              const shouldShow =
+                                state === "output-available" &&
+                                (!isLastMessage || !isStreaming);
 
                               if (shouldShow) {
                                 const { output, input } = part;
