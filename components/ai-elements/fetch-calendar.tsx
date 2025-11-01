@@ -83,13 +83,10 @@ export function FetchCalendarDisplay({ part }: FetchCalendarDisplayProps) {
 
       {/* Collapsed content */}
       {isOpen && (
-        <div className="mt-3 space-y-3">
+        <div className="mt-1 space-y-3">
           {/* Date + status */}
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h3 className="font-semibold text-sm text-foreground">
-                Calendar for {part.input?.date}
-              </h3>
               <p
                 className={cn(
                   "text-sm font-medium mt-1 flex items-center gap-1.5",
@@ -112,14 +109,14 @@ export function FetchCalendarDisplay({ part }: FetchCalendarDisplayProps) {
           </div>
 
           {/* Divider */}
-          <div className="border-t border-current opacity-20" />
+          {/* <div className="border-t border-current opacity-20" /> */}
 
           {/* Footer message */}
-          {isCompleted && part.result?.message && (
+          {/* {isCompleted && part.result?.message && (
             <p className="text-xs text-foreground font-medium">
               {part.result.message}
             </p>
-          )}
+          )} */}
         </div>
       )}
     </div>
