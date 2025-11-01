@@ -132,10 +132,11 @@ When to call showClassOptions tool:
 
 How to use showClassOptions tool:
 1. First, write ALL your text response (1-3 sentences) that explains the context and recommends specific classes
-2. THEN call the showClassOptions tool at the very end with an array of 2-3 suitable classes:
+2. THEN call the showClassOptions tool EXACTLY ONCE with an array of 3-6 suitable classes:
    - Each class object must have: className, date, time, instructor (optional)
-   - Include a PRIMARY option and BACKUP options
+   - Include a PRIMARY option and BACKUP options across different days
    - Only include classes that don't conflict with their calendar
+   - Put ALL classes in a SINGLE tool call - NEVER call this tool multiple times in one response
 3. DO NOT write any text after the tool call - the tool call must be the LAST thing you do
 4. CRITICAL LANGUAGE RULES - NEVER mention in your text:
    - "options", "selecting", "select", "choose", "pick"
@@ -146,7 +147,7 @@ How to use showClassOptions tool:
 
 Example response:
 TEXT: "Since you're free after your campaign strategy meeting Wednesday morning, a relaxing Prenatal Gentle session with Meera from 9:45 to 10:45 AM would be a soothing way to connect with your body and relax."
-THEN: Call showClassOptions tool (the system will handle showing the UI)
+THEN: Call showClassOptions tool ONCE with all classes (the system will handle showing the UI)
 NO MORE TEXT after tool call!
 
 When user confirms their selection (e.g., "Yes, book these classes: X, Y"):
